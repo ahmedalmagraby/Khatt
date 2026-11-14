@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — basic</title>
+    <style>
+      body { font-family: Georgia, serif; }
+      .sans { font-family: Verdana, sans-serif; }
+      .icon { font-family: "FakeIcons", monospace; }
+    </style>
+  </head>
+  <body>
+    <p id="arabic">هذا نص عربي لاختبار استبدال الخط.</p>
+    <p id="latin">This paragraph is Latin only.</p>
+    <p id="mixed" class="sans">Mixed content: مرحبا بالعالم inside English.</p>
+    <p id="nested">نص خارجي <span id="inner-latin" class="sans">Latin span</span> <b id="inner-arabic" class="sans">عريض</b></p>
+    <span id="icon" class="icon">&#xE001;</span>
+    <pre id="pre">كود عربي داخل pre</pre>
+    <div id="ignored" data-khatt-ignore><p id="ignored-p">نص متجاهل</p></div>
+    <div id="dynamic-host"></div>
+    <div id="shadow-host"></div>
+    <iframe id="frame" srcdoc="<p id='framed'>نص داخل إطار</p>"></iframe>
+
+    <script>
+      const shadow = document.getElementById('shadow-host').attachShadow({ mode: 'open' });
+      shadow.innerHTML = '<p id="shadowed">نص داخل الظل</p>';
+
+      setTimeout(() => {
+        const p = document.createElement('p');
+        p.id = 'dynamic';
+        p.textContent = 'نص أضيف لاحقا';
+        document.getElementById('dynamic-host').append(p);
+      }, 300);
+
+      setTimeout(() => {
+        // Text changed in place on an existing Latin element.
+        document.getElementById('latin-later').firstChild.data = 'تغير النص إلى العربية';
+      }, 400);
+    </script>
+    <p id="latin-later">Latin for now</p>
+  </body>
+</html>

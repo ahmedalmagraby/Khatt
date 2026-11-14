@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — reading extras</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 400px; margin: 20px; }
+    </style>
+  </head>
+  <body>
+    <h2 id="heading">عنوان عربي</h2>
+    <p id="tash">العَرَبِيَّةُ لُغَةٌ جَمِيلَةٌ</p>
+    <p id="num">عام 2024 شهد 15 حدثا</p>
+    <p id="indic">عام ٢٠٢٤ و ۱۴۰۳</p>
+    <p id="latin-num">Year 2024 only</p>
+    <pre id="pre">كَتَبَ 123</pre>
+    <textarea id="area">نَصٌّ 123</textarea>
+    <div id="edit" contenteditable="true">نَصٌّ 123</div>
+    <p id="dyn">Latin for now</p>
+    <p id="long">هذه فقرة عربية طويلة تمتد على عدة أسطر حتى يمكن اختبار ضبط الفقرات على الجانبين، فالسطر الأخير وحده لا يكفي لمعرفة ذلك.</p>
+    <p id="centered-long" style="text-align: center">هذه فقرة عربية طويلة في الوسط عمدا ويجب أن تبقى في الوسط مهما كان إعداد ضبط الفقرات على الجانبين.</p>
+
+    <script>
+      setTimeout(() => {
+        document.getElementById('dyn').firstChild.data = 'نَصٌّ أُضِيفَ لاحِقًا 7';
+      }, 300);
+    </script>
+  </body>
+</html>

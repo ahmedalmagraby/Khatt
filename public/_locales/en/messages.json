@@ -1,0 +1,200 @@
+{
+  "extName": {
+    "message": "Khatt — Beautiful Arabic Text"
+  },
+  "extDescription": {
+    "message": "Makes Arabic text easier to read on any website: better fonts, line spacing and right-to-left alignment. Other text is untouched."
+  },
+  "actionTitle": {
+    "message": "Khatt"
+  },
+  "masterLabel": {
+    "message": "Khatt enabled"
+  },
+  "siteLabel": {
+    "message": "Enabled on this site"
+  },
+  "unavailable": {
+    "message": "Khatt can't run on this page."
+  },
+  "scopeLabel": {
+    "message": "Apply changes to"
+  },
+  "scopeAll": {
+    "message": "All sites"
+  },
+  "scopeSite": {
+    "message": "This site only"
+  },
+  "siteHasOverrides": {
+    "message": "This site has its own settings."
+  },
+  "resetSite": {
+    "message": "Use global settings"
+  },
+  "fontHeading": {
+    "message": "Font"
+  },
+  "sizeHeading": {
+    "message": "Arabic text size"
+  },
+  "sampleText": {
+    "message": "أبجد هوز حطي"
+  },
+  "lineHeightHeading": {
+    "message": "Minimum line height"
+  },
+  "wordSpacingHeading": {
+    "message": "Word spacing"
+  },
+  "directionLabel": {
+    "message": "Fix text direction"
+  },
+  "directionHint": {
+    "message": "Right-align Arabic text on left-to-right sites."
+  },
+  "off": {
+    "message": "Off"
+  },
+  "presetsHeading": {
+    "message": "Presets"
+  },
+  "presetComfort": {
+    "message": "Comfort"
+  },
+  "presetCompact": {
+    "message": "Compact"
+  },
+  "presetNaskh": {
+    "message": "Naskh"
+  },
+  "presetModern": {
+    "message": "Modern"
+  },
+  "fineTuning": {
+    "message": "Fine-tuning"
+  },
+  "readingAids": {
+    "message": "Reading aids"
+  },
+  "hideTashkeel": {
+    "message": "Hide diacritics (tashkeel)"
+  },
+  "numeralsLabel": {
+    "message": "Numerals"
+  },
+  "numeralsOff": {
+    "message": "As written"
+  },
+  "numeralsArabicIndic": {
+    "message": "Arabic-Indic ١٢٣"
+  },
+  "numeralsWestern": {
+    "message": "Western 123"
+  },
+  "justifyLabel": {
+    "message": "Justify paragraphs"
+  },
+  "moreOptions": {
+    "message": "More fonts and options"
+  },
+  "optionsTitle": {
+    "message": "Khatt options"
+  },
+  "optionsIntro": {
+    "message": "These settings apply to all sites. Use the toolbar popup for typography and per-site changes."
+  },
+  "sampleTextLong": {
+    "message": "الخط الجميل يجعل القراءة أمتع"
+  },
+  "bodyFontHeading": {
+    "message": "Font"
+  },
+  "systemFontHeading": {
+    "message": "Font installed on this computer"
+  },
+  "systemFontIntro": {
+    "message": "Type the name of any font installed on this computer. It is remembered on this device only and is not synced."
+  },
+  "systemFontPlaceholder": {
+    "message": "Font name, e.g. Sakkal Majalla"
+  },
+  "systemFontUse": {
+    "message": "Use this font"
+  },
+  "systemFontClear": {
+    "message": "Clear"
+  },
+  "systemFontLoad": {
+    "message": "List installed fonts"
+  },
+  "systemFontLoaded": {
+    "message": "$1 installed font families listed — start typing to pick one."
+  },
+  "systemFontDenied": {
+    "message": "Installed fonts could not be listed. You can still type a font name."
+  },
+  "systemFontEmpty": {
+    "message": "Type a font name first."
+  },
+  "headingFontHeading": {
+    "message": "Heading font"
+  },
+  "headingFontIntro": {
+    "message": "Use a different font for Arabic text inside headings."
+  },
+  "headingFontSame": {
+    "message": "Same as the main font"
+  },
+  "sitesHeading": {
+    "message": "Sites"
+  },
+  "sitesIntro": {
+    "message": "Sites where Khatt is turned off or has its own settings."
+  },
+  "sitesEmpty": {
+    "message": "No site-specific settings yet."
+  },
+  "siteOff": {
+    "message": "Off"
+  },
+  "siteCustom": {
+    "message": "Custom settings"
+  },
+  "siteTurnOn": {
+    "message": "Turn on"
+  },
+  "siteForget": {
+    "message": "Reset"
+  },
+  "backupHeading": {
+    "message": "Backup"
+  },
+  "backupIntro": {
+    "message": "Save all settings to a file, or restore them from one. The installed-font name is not included."
+  },
+  "backupExport": {
+    "message": "Export settings"
+  },
+  "backupImport": {
+    "message": "Import settings"
+  },
+  "backupExported": {
+    "message": "Settings exported."
+  },
+  "backupImported": {
+    "message": "Settings imported."
+  },
+  "backupInvalid": {
+    "message": "That file is not a Khatt settings file."
+  },
+  "backupFailed": {
+    "message": "Something went wrong. Nothing was changed."
+  },
+  "backupConfirm": {
+    "message": "Replace all current Khatt settings with the ones in this file?"
+  },
+  "needsRefresh": {
+    "message": "Refresh this page once to apply Khatt here."
+  }
+}

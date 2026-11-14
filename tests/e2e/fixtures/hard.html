@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — hardening</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 500px; margin: 20px; }
+      /* A site that forces its font and spacing with high specificity. */
+      #wrap .forced { font-family: "Courier New", monospace !important; letter-spacing: 2px !important; }
+    </style>
+  </head>
+  <body>
+    <div id="wrap"><p id="forced" class="forced">نص عربي بخط مفروض من الموقع.</p></div>
+
+    <div id="editor" contenteditable="true"><p id="ed-p">نص عربي داخل محرر.</p></div>
+    <div id="not-editor" contenteditable="false"><p id="ne-p">نص عربي عادي.</p></div>
+
+    <div id="late-host"></div>
+    <p id="morph">نص عربي ستزال وسومه.</p>
+    <input id="morph-field" type="text" />
+  </body>
+</html>

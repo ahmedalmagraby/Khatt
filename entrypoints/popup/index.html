@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Khatt</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1><span class="logo" aria-hidden="true">خط</span> Khatt</h1>
+      <label class="switch">
+        <span class="sr-only" data-i18n="masterLabel"></span>
+        <input type="checkbox" id="master" />
+        <span class="track" aria-hidden="true"></span>
+      </label>
+    </header>
+
+    <main id="controls">
+      <section id="site-section" class="row">
+        <div class="row-text">
+          <span data-i18n="siteLabel"></span>
+          <span id="host" class="muted" dir="ltr"></span>
+        </div>
+        <label class="switch">
+          <span class="sr-only" data-i18n="siteLabel"></span>
+          <input type="checkbox" id="site-enabled" />
+          <span class="track" aria-hidden="true"></span>
+        </label>
+      </section>
+      <p id="unavailable" class="notice" data-i18n="unavailable" hidden></p>
+      <p id="needs-refresh" class="notice" data-i18n="needsRefresh" hidden></p>
+
+      <fieldset id="scope" class="segmented">
+        <legend data-i18n="scopeLabel"></legend>
+        <label><input type="radio" name="scope" value="all" /><span data-i18n="scopeAll"></span></label>
+        <label><input type="radio" name="scope" value="site" /><span data-i18n="scopeSite"></span></label>
+      </fieldset>
+      <p id="override-note" class="notice" hidden>
+        <span data-i18n="siteHasOverrides"></span>
+        <button type="button" id="reset-site" class="link" data-i18n="resetSite"></button>
+      </p>
+
+      <section>
+        <h2 data-i18n="presetsHeading"></h2>
+        <div id="preset-list" class="chips"></div>
+      </section>
+
+      <fieldset class="fonts">
+        <legend data-i18n="fontHeading"></legend>
+        <div id="font-list"></div>
+      </fieldset>
+
+      <section class="slider">
+        <label for="size"><span data-i18n="sizeHeading"></span> <output id="size-value" for="size"></output></label>
+        <input type="range" id="size" min="80" max="140" step="5" />
+      </section>
+
+      <details id="fine-tuning">
+        <summary data-i18n="fineTuning"></summary>
+        <div class="details-body">
+          <section class="slider">
+            <label for="line-height"><span data-i18n="lineHeightHeading"></span> <output id="line-height-value" for="line-height"></output></label>
+            <input type="range" id="line-height" min="1.3" max="2.4" step="0.1" />
+          </section>
+
+          <section class="slider">
+            <label for="word-spacing"><span data-i18n="wordSpacingHeading"></span> <output id="word-spacing-value" for="word-spacing"></output></label>
+            <input type="range" id="word-spacing" min="0" max="0.3" step="0.05" />
+          </section>
+
+          <section class="option">
+            <div class="row-text">
+              <span data-i18n="directionLabel"></span>
+              <span class="muted wrap" data-i18n="directionHint"></span>
+            </div>
+            <label class="switch">
+              <span class="sr-only" data-i18n="directionLabel"></span>
+              <input type="checkbox" id="fix-direction" />
+              <span class="track" aria-hidden="true"></span>
+            </label>
+          </section>
+        </div>
+      </details>
+
+      <details id="reading-aids">
+        <summary data-i18n="readingAids"></summary>
+        <div class="details-body">
+          <section class="option">
+            <span data-i18n="hideTashkeel"></span>
+            <label class="switch">
+              <span class="sr-only" data-i18n="hideTashkeel"></span>
+              <input type="checkbox" id="hide-tashkeel" />
+              <span class="track" aria-hidden="true"></span>
+            </label>
+          </section>
+
+          <section class="option">
+            <label for="numerals" data-i18n="numeralsLabel"></label>
+            <select id="numerals">
+              <option value="off" data-i18n="numeralsOff"></option>
+              <option value="arabic-indic" data-i18n="numeralsArabicIndic"></option>
+              <option value="western" data-i18n="numeralsWestern"></option>
+            </select>
+          </section>
+
+          <section class="option">
+            <span data-i18n="justifyLabel"></span>
+            <label class="switch">
+              <span class="sr-only" data-i18n="justifyLabel"></span>
+              <input type="checkbox" id="justify" />
+              <span class="track" aria-hidden="true"></span>
+            </label>
+          </section>
+        </div>
+      </details>
+    </main>
+
+    <footer>
+      <button type="button" id="open-options" class="link" data-i18n="moreOptions"></button>
+    </footer>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

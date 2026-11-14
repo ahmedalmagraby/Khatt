@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="manifest.open_in_tab" content="true" />
+    <title>Khatt</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header>
+      <h1><span class="logo" aria-hidden="true">خط</span> <span data-i18n="optionsTitle"></span></h1>
+      <p class="muted" data-i18n="optionsIntro"></p>
+    </header>
+
+    <main>
+      <section aria-labelledby="font-heading">
+        <h2 id="font-heading" data-i18n="bodyFontHeading"></h2>
+        <fieldset class="fonts">
+          <legend class="sr-only" data-i18n="bodyFontHeading"></legend>
+          <div id="font-list"></div>
+        </fieldset>
+      </section>
+
+      <section aria-labelledby="system-heading">
+        <h2 id="system-heading" data-i18n="systemFontHeading"></h2>
+        <p class="muted" data-i18n="systemFontIntro"></p>
+        <div class="inline">
+          <input
+            type="text"
+            id="system-font"
+            list="installed-fonts"
+            autocomplete="off"
+            spellcheck="false"
+            dir="ltr"
+            data-i18n-placeholder="systemFontPlaceholder"
+          />
+          <datalist id="installed-fonts"></datalist>
+          <button type="button" id="use-system" class="primary" data-i18n="systemFontUse"></button>
+          <button type="button" id="clear-system" data-i18n="systemFontClear"></button>
+        </div>
+        <button type="button" id="load-installed" class="link" data-i18n="systemFontLoad" hidden></button>
+        <p id="system-sample" class="sample-line" lang="ar" dir="rtl" hidden></p>
+        <p id="system-status" class="muted" role="status"></p>
+      </section>
+
+      <section aria-labelledby="heading-font-heading">
+        <h2 id="heading-font-heading" data-i18n="headingFontHeading"></h2>
+        <p class="muted" data-i18n="headingFontIntro"></p>
+        <select id="heading-font" aria-labelledby="heading-font-heading"></select>
+      </section>
+
+      <section aria-labelledby="sites-heading">
+        <h2 id="sites-heading" data-i18n="sitesHeading"></h2>
+        <p class="muted" data-i18n="sitesIntro"></p>
+        <ul id="site-list"></ul>
+        <p id="sites-empty" class="muted" data-i18n="sitesEmpty" hidden></p>
+      </section>
+
+      <section aria-labelledby="backup-heading">
+        <h2 id="backup-heading" data-i18n="backupHeading"></h2>
+        <p class="muted" data-i18n="backupIntro"></p>
+        <div class="inline">
+          <button type="button" id="export" data-i18n="backupExport"></button>
+          <button type="button" id="import" data-i18n="backupImport"></button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden />
+        </div>
+        <p id="backup-status" class="muted" role="status"></p>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

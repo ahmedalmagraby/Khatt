@@ -1,0 +1,7 @@
+# Text files use LF in the repository on every platform.
+* text=auto eol=lf
+
+# Binary assets are never converted.
+*.woff2 binary
+*.png binary
+*.zip binary

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — typography and direction</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 600px; margin: 20px; }
+    </style>
+  </head>
+  <body>
+    <p id="ar-p">هذه فقرة عربية طويلة نسبيا تستخدم لاختبار ارتفاع السطر واتجاه النص في صفحة اتجاهها من اليسار إلى اليمين، ويجب أن تحاذى إلى اليمين.</p>
+    <p id="en-p">This English paragraph must stay left-aligned with its original line height.</p>
+    <p id="tall" style="line-height: 2.2">فقرة عربية بارتفاع سطر كبير أصلا.</p>
+    <p id="centered" style="text-align: center">فقرة عربية في الوسط عمدا.</p>
+    <p id="spaced" style="letter-spacing: 3px">تباعد الحروف يكسر اتصالها.</p>
+    <p id="span-p"><span id="sp">نص عربي داخل عنصر سطري.</span></p>
+    <button id="btn">زر عربي</button>
+
+    <ul id="ar-list">
+      <li>العنصر الأول</li>
+      <li>العنصر الثاني</li>
+      <li>English item</li>
+    </ul>
+    <ul id="en-list">
+      <li>First item</li>
+      <li>Second item</li>
+      <li id="ar-li">عنصر عربي وحيد</li>
+    </ul>
+
+    <input id="field" type="text" />
+    <input id="email" type="email" />
+    <input id="ltr-field" type="text" dir="ltr" />
+    <textarea id="area"></textarea>
+
+    <div dir="rtl">
+      <p id="rtl-p">فقرة داخل حاوية اتجاهها من اليمين أصلا.</p>
+      <input id="rtl-field" type="text" />
+    </div>
+  </body>
+</html>

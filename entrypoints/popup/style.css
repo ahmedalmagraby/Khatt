@@ -1,0 +1,389 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #1c1b1a;
+  --muted: #6b6864;
+  --line: #e4e1dc;
+  --surface: #f6f4f0;
+  --accent: #0f766e;
+  --accent-fg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1b1c;
+    --fg: #ecebe8;
+    --muted: #a3a09a;
+    --line: #36353a;
+    --surface: #26262a;
+    --accent: #2dd4bf;
+    --accent-fg: #06302b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  width: 320px;
+  /* Chrome caps popups at 600px tall; keep the whole panel under that. */
+  padding: 12px 16px 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.5 system-ui, "Segoe UI", sans-serif;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+main {
+  display: grid;
+  gap: 10px;
+}
+
+main.off > * {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+legend,
+h2,
+.slider label {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.slider label {
+  display: flex;
+  justify-content: space-between;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.row-text {
+  display: grid;
+  min-width: 0;
+}
+
+.muted.wrap {
+  white-space: normal;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.15s;
+  pointer-events: none;
+}
+
+.track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  transition: inset-inline-start 0.15s;
+}
+
+.switch input:checked + .track {
+  background: var(--accent);
+}
+
+.switch input:checked + .track::after {
+  inset-inline-start: 18px;
+}
+
+.switch input:focus-visible + .track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Segmented scope control */
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.segmented legend {
+  grid-column: 1 / -1;
+}
+
+.segmented label {
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+}
+
+.segmented input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented span {
+  display: block;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.segmented input:checked + span {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.segmented input:disabled + span {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Font list */
+#font-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  /* Two rows and a peek of the third, so it is clear the list scrolls. */
+  max-height: 136px;
+  overflow-y: auto;
+  padding: 2px;
+  margin: -2px;
+}
+
+.font {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 6px 10px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.font input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.font:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.font:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.font .sample {
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.7;
+  direction: rtl;
+  text-align: start;
+}
+
+.font .name {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+h2 {
+  margin-top: 0;
+}
+
+/* Preset chips */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.chips button {
+  padding: 5px 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chips button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.chips button:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Collapsible groups */
+details {
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+summary {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.details-body {
+  display: grid;
+  gap: 10px;
+  padding: 2px 12px 12px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+select {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+}
+
+footer {
+  margin-top: 10px;
+  text-align: center;
+}

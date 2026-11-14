@@ -1,0 +1,200 @@
+{
+  "extName": {
+    "message": "خط — نص عربي أجمل"
+  },
+  "extDescription": {
+    "message": "يجعل قراءة النص العربي أسهل في أي موقع: خطوط أجمل وتباعد أسطر مريح ومحاذاة صحيحة من اليمين، دون المساس ببقية النصوص."
+  },
+  "actionTitle": {
+    "message": "خط"
+  },
+  "masterLabel": {
+    "message": "تفعيل خط"
+  },
+  "siteLabel": {
+    "message": "مفعّل في هذا الموقع"
+  },
+  "unavailable": {
+    "message": "لا يمكن تشغيل خط في هذه الصفحة."
+  },
+  "scopeLabel": {
+    "message": "تطبيق التغييرات على"
+  },
+  "scopeAll": {
+    "message": "كل المواقع"
+  },
+  "scopeSite": {
+    "message": "هذا الموقع فقط"
+  },
+  "siteHasOverrides": {
+    "message": "لهذا الموقع إعدادات خاصة."
+  },
+  "resetSite": {
+    "message": "استخدام الإعدادات العامة"
+  },
+  "fontHeading": {
+    "message": "الخط"
+  },
+  "sizeHeading": {
+    "message": "حجم النص العربي"
+  },
+  "sampleText": {
+    "message": "أبجد هوز حطي"
+  },
+  "lineHeightHeading": {
+    "message": "أدنى ارتفاع للسطر"
+  },
+  "wordSpacingHeading": {
+    "message": "تباعد الكلمات"
+  },
+  "directionLabel": {
+    "message": "تصحيح اتجاه النص"
+  },
+  "directionHint": {
+    "message": "محاذاة النص العربي إلى اليمين في المواقع ذات الاتجاه الأيسر."
+  },
+  "off": {
+    "message": "إيقاف"
+  },
+  "presetsHeading": {
+    "message": "أنماط جاهزة"
+  },
+  "presetComfort": {
+    "message": "مريح"
+  },
+  "presetCompact": {
+    "message": "مضغوط"
+  },
+  "presetNaskh": {
+    "message": "نسخ"
+  },
+  "presetModern": {
+    "message": "عصري"
+  },
+  "fineTuning": {
+    "message": "ضبط دقيق"
+  },
+  "readingAids": {
+    "message": "مساعدات القراءة"
+  },
+  "hideTashkeel": {
+    "message": "إخفاء التشكيل"
+  },
+  "numeralsLabel": {
+    "message": "الأرقام"
+  },
+  "numeralsOff": {
+    "message": "كما كُتبت"
+  },
+  "numeralsArabicIndic": {
+    "message": "هندية ١٢٣"
+  },
+  "numeralsWestern": {
+    "message": "عربية 123"
+  },
+  "justifyLabel": {
+    "message": "ضبط الفقرات"
+  },
+  "moreOptions": {
+    "message": "خطوط وخيارات أكثر"
+  },
+  "optionsTitle": {
+    "message": "خيارات خط"
+  },
+  "optionsIntro": {
+    "message": "تنطبق هذه الإعدادات على كل المواقع. استخدم النافذة المنبثقة لضبط الطباعة وإعدادات كل موقع."
+  },
+  "sampleTextLong": {
+    "message": "الخط الجميل يجعل القراءة أمتع"
+  },
+  "bodyFontHeading": {
+    "message": "الخط"
+  },
+  "systemFontHeading": {
+    "message": "خط مثبّت على هذا الحاسوب"
+  },
+  "systemFontIntro": {
+    "message": "اكتب اسم أي خط مثبّت على هذا الحاسوب. يُحفظ على هذا الجهاز فقط ولا تتم مزامنته."
+  },
+  "systemFontPlaceholder": {
+    "message": "اسم الخط، مثل Sakkal Majalla"
+  },
+  "systemFontUse": {
+    "message": "استخدام هذا الخط"
+  },
+  "systemFontClear": {
+    "message": "مسح"
+  },
+  "systemFontLoad": {
+    "message": "عرض الخطوط المثبّتة"
+  },
+  "systemFontLoaded": {
+    "message": "تم عرض $1 من عائلات الخطوط المثبّتة — ابدأ الكتابة لاختيار أحدها."
+  },
+  "systemFontDenied": {
+    "message": "تعذّر عرض الخطوط المثبّتة. يمكنك كتابة اسم الخط يدويا."
+  },
+  "systemFontEmpty": {
+    "message": "اكتب اسم الخط أولا."
+  },
+  "headingFontHeading": {
+    "message": "خط العناوين"
+  },
+  "headingFontIntro": {
+    "message": "استخدام خط مختلف للنص العربي داخل العناوين."
+  },
+  "headingFontSame": {
+    "message": "مثل الخط الرئيسي"
+  },
+  "sitesHeading": {
+    "message": "المواقع"
+  },
+  "sitesIntro": {
+    "message": "المواقع التي أُوقف فيها خط أو لها إعدادات خاصة."
+  },
+  "sitesEmpty": {
+    "message": "لا توجد إعدادات خاصة بأي موقع بعد."
+  },
+  "siteOff": {
+    "message": "متوقف"
+  },
+  "siteCustom": {
+    "message": "إعدادات خاصة"
+  },
+  "siteTurnOn": {
+    "message": "تشغيل"
+  },
+  "siteForget": {
+    "message": "إعادة ضبط"
+  },
+  "backupHeading": {
+    "message": "النسخ الاحتياطي"
+  },
+  "backupIntro": {
+    "message": "احفظ كل الإعدادات في ملف أو استعدها منه. لا يتضمن الملف اسم الخط المثبّت."
+  },
+  "backupExport": {
+    "message": "تصدير الإعدادات"
+  },
+  "backupImport": {
+    "message": "استيراد الإعدادات"
+  },
+  "backupExported": {
+    "message": "تم تصدير الإعدادات."
+  },
+  "backupImported": {
+    "message": "تم استيراد الإعدادات."
+  },
+  "backupInvalid": {
+    "message": "هذا الملف ليس ملف إعدادات خط."
+  },
+  "backupFailed": {
+    "message": "حدث خطأ ولم يتغير شيء."
+  },
+  "backupConfirm": {
+    "message": "هل تريد استبدال كل إعدادات خط الحالية بما في هذا الملف؟"
+  },
+  "needsRefresh": {
+    "message": "أعد تحميل هذه الصفحة مرة واحدة لتطبيق خط عليها."
+  }
+}
