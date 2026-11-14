@@ -1,6 +1,6 @@
 import { buildBackup, parseBackup } from '@/lib/backup';
 import { cleanFontName } from '@/lib/css';
-import { DEFAULT_FONT_ID, SYSTEM_FONT_ID } from '@/lib/fonts';
+import { DEFAULT_FONT_ID, effectiveFontId, SYSTEM_FONT_ID } from '@/lib/fonts';
 import { hasOverrides, resolveSettings, type Settings, type SiteConfig } from '@/lib/settings';
 import {
   loadEverything,
@@ -8,6 +8,7 @@ import {
   loadSites,
   loadSystemFont,
   removeSite,
+  removeSiteOverrideKeys,
   replaceEverything,
   setSiteEnabled,
   setSystemFont,
@@ -41,6 +42,7 @@ const headingFont = $<HTMLSelectElement>('heading-font');
 const siteList = $('site-list');
 const sitesEmpty = $('sites-empty');
 const importFile = $<HTMLInputElement>('import-file');
+const importDialog = $<HTMLDialogElement>('import-dialog');
 const backupStatus = $('backup-status');
 
 let global: Partial<Settings> = {};
@@ -67,7 +69,7 @@ function render(): void {
       ...choices.map((c) => new Option(c.label, c.id)),
     );
   }
-  checkFontCard(fontList, settings.fontId);
+  checkFontCard(fontList, effectiveFontId(settings.fontId, systemFont));
   headingFont.value = choices.some((c) => c.id === settings.headingFontId)
     ? settings.headingFontId
     : '';
@@ -93,7 +95,7 @@ function siteRow({ hostname, config }: { hostname: string; config: SiteConfig })
   const host = document.createElement('span');
   host.className = 'host';
   host.dir = 'ltr';
-  host.textContent = hostname;
+  host.textContent = hostname || t('localFiles');
   li.append(host);
 
   const badge = (key: string) => {
@@ -107,6 +109,8 @@ function siteRow({ hostname, config }: { hostname: string; config: SiteConfig })
     el.type = 'button';
     el.dataset.action = action;
     el.textContent = t(key);
+    // Every row has the same buttons; the name says which site this one acts on.
+    el.setAttribute('aria-label', `${t(key)}: ${hostname || t('localFiles')}`);
     el.addEventListener('click', () => void commit(run));
     li.append(el);
   };
@@ -130,14 +134,28 @@ async function reload(): Promise<void> {
   }
 }
 
-/** Runs a storage write, then re-reads so the page always shows what is stored. */
+/**
+ * Runs a storage write. A successful write comes back through the storage listener,
+ * which re-renders; only a failed one needs re-reading here, to undo the control.
+ */
 async function commit(write: () => Promise<void>): Promise<void> {
   try {
     await write();
   } catch (err) {
     console.error('[Khatt] could not save settings', err);
+    await reload();
   }
-  await reload();
+}
+
+/** Asks before replacing all settings. Resolves true only on an explicit yes. */
+function confirmImport(): Promise<boolean> {
+  return new Promise((resolve) => {
+    importDialog.returnValue = '';
+    importDialog.addEventListener('close', () => resolve(importDialog.returnValue === 'confirm'), {
+      once: true,
+    });
+    importDialog.showModal();
+  });
 }
 
 const save = (patch: Partial<Settings>) => commit(() => updateGlobal(patch));
@@ -184,7 +202,7 @@ async function importSettings(file: File): Promise<void> {
     status(backupStatus, t('backupInvalid'), true);
     return;
   }
-  if (!window.confirm(t('backupConfirm'))) return;
+  if (!(await confirmImport())) return;
   try {
     await replaceEverything(data);
     status(backupStatus, t('backupImported'));
@@ -200,7 +218,9 @@ function bind(): void {
 
   systemInput.addEventListener('input', () => showSystemSample(systemInput.value));
 
-  $('use-system').addEventListener('click', () => {
+  // A form, so pressing Enter in the field applies the font too.
+  $('system-form').addEventListener('submit', (event) => {
+    event.preventDefault();
     const name = cleanFontName(systemInput.value);
     if (!name) {
       status(systemStatus, t('systemFontEmpty'), true);
@@ -223,6 +243,13 @@ function bind(): void {
       if (global.fontId === SYSTEM_FONT_ID) patch.fontId = DEFAULT_FONT_ID;
       if (global.headingFontId === SYSTEM_FONT_ID) patch.headingFontId = '';
       if (Object.keys(patch).length) await updateGlobal(patch);
+      // Sites that chose the system font for themselves go back to the global font.
+      for (const { hostname, config } of sites) {
+        const keys = (['fontId', 'headingFontId'] as const).filter(
+          (key) => config.overrides?.[key] === SYSTEM_FONT_ID,
+        );
+        if (keys.length) await removeSiteOverrideKeys(hostname, keys);
+      }
     });
   });
 

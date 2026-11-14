@@ -18,7 +18,7 @@ export interface Backup {
   data: Record<string, unknown>;
 }
 
-const SITE_KEY_RE = /^site:[\w.\-:[\]]{1,253}$/;
+const SITE_KEY_RE = /^site:[\w.\-:[\]]{0,253}$/;
 
 export function buildBackup(data: Record<string, unknown>, now: Date = new Date()): Backup {
   return {

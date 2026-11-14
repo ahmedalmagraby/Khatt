@@ -75,6 +75,17 @@ export async function clearSiteOverrides(hostname: string): Promise<void> {
   await saveSite(hostname, withoutSiteOverrides(site));
 }
 
+/** Drops individual overrides of a site, leaving its other settings as they are. */
+export async function removeSiteOverrideKeys(
+  hostname: string,
+  keys: (keyof Settings)[],
+): Promise<void> {
+  const { site } = await loadRaw(hostname);
+  const overrides = { ...site.overrides };
+  for (const key of keys) delete overrides[key];
+  await saveSite(hostname, { ...site, overrides });
+}
+
 /** Forgets everything stored for a site, returning it to the global settings. */
 export async function removeSite(hostname: string): Promise<void> {
   await browser.storage.sync.remove(siteKey(hostname));

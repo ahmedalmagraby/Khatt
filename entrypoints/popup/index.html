@@ -1,7 +1,8 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Khatt</title>
     <link rel="stylesheet" href="./style.css" />
@@ -11,7 +12,7 @@
       <h1><span class="logo" aria-hidden="true">خط</span> Khatt</h1>
       <label class="switch">
         <span class="sr-only" data-i18n="masterLabel"></span>
-        <input type="checkbox" id="master" />
+        <input type="checkbox" role="switch" id="master" />
         <span class="track" aria-hidden="true"></span>
       </label>
     </header>
@@ -19,17 +20,15 @@
     <main id="controls">
       <section id="site-section" class="row">
         <div class="row-text">
-          <span data-i18n="siteLabel"></span>
+          <label for="site-enabled" id="site-enabled-label" data-i18n="siteLabel"></label>
           <span id="host" class="muted" dir="ltr"></span>
         </div>
-        <label class="switch">
-          <span class="sr-only" data-i18n="siteLabel"></span>
-          <input type="checkbox" id="site-enabled" />
+        <span class="switch">
+          <input type="checkbox" role="switch" id="site-enabled" aria-labelledby="site-enabled-label" aria-describedby="host" />
           <span class="track" aria-hidden="true"></span>
-        </label>
+        </span>
       </section>
       <p id="unavailable" class="notice" data-i18n="unavailable" hidden></p>
-      <p id="needs-refresh" class="notice" data-i18n="needsRefresh" hidden></p>
 
       <fieldset id="scope" class="segmented">
         <legend data-i18n="scopeLabel"></legend>
@@ -71,14 +70,13 @@
 
           <section class="option">
             <div class="row-text">
-              <span data-i18n="directionLabel"></span>
-              <span class="muted wrap" data-i18n="directionHint"></span>
+              <label for="fix-direction" id="fix-direction-label" data-i18n="directionLabel"></label>
+              <span id="fix-direction-hint" class="muted wrap" data-i18n="directionHint"></span>
             </div>
-            <label class="switch">
-              <span class="sr-only" data-i18n="directionLabel"></span>
-              <input type="checkbox" id="fix-direction" />
+            <span class="switch">
+              <input type="checkbox" role="switch" id="fix-direction" aria-labelledby="fix-direction-label" aria-describedby="fix-direction-hint" />
               <span class="track" aria-hidden="true"></span>
-            </label>
+            </span>
           </section>
         </div>
       </details>
@@ -87,12 +85,11 @@
         <summary data-i18n="readingAids"></summary>
         <div class="details-body">
           <section class="option">
-            <span data-i18n="hideTashkeel"></span>
-            <label class="switch">
-              <span class="sr-only" data-i18n="hideTashkeel"></span>
-              <input type="checkbox" id="hide-tashkeel" />
+            <label for="hide-tashkeel" id="hide-tashkeel-label" data-i18n="hideTashkeel"></label>
+            <span class="switch">
+              <input type="checkbox" role="switch" id="hide-tashkeel" aria-labelledby="hide-tashkeel-label" />
               <span class="track" aria-hidden="true"></span>
-            </label>
+            </span>
           </section>
 
           <section class="option">
@@ -105,12 +102,11 @@
           </section>
 
           <section class="option">
-            <span data-i18n="justifyLabel"></span>
-            <label class="switch">
-              <span class="sr-only" data-i18n="justifyLabel"></span>
-              <input type="checkbox" id="justify" />
+            <label for="justify" id="justify-label" data-i18n="justifyLabel"></label>
+            <span class="switch">
+              <input type="checkbox" role="switch" id="justify" aria-labelledby="justify-label" />
               <span class="track" aria-hidden="true"></span>
-            </label>
+            </span>
           </section>
         </div>
       </details>

@@ -129,12 +129,21 @@ test('exports settings to a file and imports them back', async () => {
   // Change everything, then restore from the file.
   await h.clearStorage();
   await h.setStorage({ global: { fontId: 'amiri' }, 'site:other.example': { enabled: false } });
-  options.once('dialog', (dialog) => void dialog.accept());
-  await options.locator('#import-file').setInputFiles({
-    name: 'khatt-settings.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from(exported),
-  });
+  const pick = () =>
+    options.locator('#import-file').setInputFiles({
+      name: 'khatt-settings.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(exported),
+    });
+  // Cancelling the confirmation changes nothing.
+  await pick();
+  await expect(options.locator('#import-dialog')).toBeVisible();
+  await options.locator('#import-dialog button[value="cancel"]').click();
+  await expect(options.locator('#import-dialog')).toBeHidden();
+  expect((await h.getStorage()).global).toEqual({ fontId: 'amiri' });
+
+  await pick();
+  await options.locator('#import-dialog button[value="confirm"]').click();
   await expect(options.locator('#backup-status')).toHaveText('Settings imported.');
   const stored = await h.getStorage();
   expect(stored.global).toEqual({ fontId: 'vazirmatn', hideTashkeel: true });

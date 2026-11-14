@@ -10,7 +10,7 @@ export const HEADING_FAMILY = 'Khatt Arabic Heading';
 export const ATTR = 'data-khatt';
 /** On Arabic prose elements. Value = the element's original line height in tenths of its font size. */
 export const PROSE_ATTR = 'data-khatt-prose';
-/** On blocks whose direction Khatt fixes: "auto" (per-paragraph), "bidi" (order only) or "rtl" (lists). */
+/** On blocks whose direction Khatt fixes: "rtl", "rtl-bidi", "auto" or "bidi" — see DirectionValue. */
 export const DIR_ATTR = 'data-khatt-dir';
 /** On text fields where Khatt added dir="auto", so it can be taken back. */
 export const AUTO_DIR_ATTR = 'data-khatt-auto-dir';
@@ -61,9 +61,13 @@ export function baseCss(settings: Settings): string {
     rules.push(
       `[${DIR_ATTR}="auto"]${BOOST},[${DIR_ATTR}="bidi"]${BOOST}{unicode-bidi:plaintext !important}`,
     );
-    rules.push(`[${DIR_ATTR}="auto"]${BOOST}{text-align:start !important}`);
+    // "rtl" blocks are mainly Arabic and right-to-left as a whole; the "-bidi" forms
+    // leave the site's alignment alone.
     rules.push(
-      `[${DIR_ATTR}="rtl"]${BOOST}{direction:rtl !important;text-align:start !important}`,
+      `[${DIR_ATTR}="rtl"]${BOOST},[${DIR_ATTR}="rtl-bidi"]${BOOST}{direction:rtl !important}`,
+    );
+    rules.push(
+      `[${DIR_ATTR}="auto"]${BOOST},[${DIR_ATTR}="rtl"]${BOOST}{text-align:start !important}`,
     );
   }
   // After the direction rules, so it wins over their text-align.

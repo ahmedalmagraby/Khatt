@@ -47,12 +47,8 @@ export class FontLoader {
     const generation = ++this.generation;
     const wanted = new Map(specs.map((spec) => [JSON.stringify(spec), spec]));
 
-    for (const [key, face] of this.faces) {
-      if (wanted.has(key)) continue;
-      document.fonts.delete(face);
-      this.faces.delete(key);
-    }
-
+    // New faces go in before old ones come out, so text never falls back to the
+    // site's font in between (for example while the size slider is dragged).
     await Promise.all(
       [...wanted].map(async ([key, spec]) => {
         if (this.faces.has(key)) return;
@@ -73,6 +69,14 @@ export class FontLoader {
         }
       }),
     );
+
+    // A newer call owns the set now and will do its own tidying.
+    if (generation !== this.generation) return;
+    for (const [key, face] of this.faces) {
+      if (wanted.has(key)) continue;
+      document.fonts.delete(face);
+      this.faces.delete(key);
+    }
   }
 
   clear(): void {

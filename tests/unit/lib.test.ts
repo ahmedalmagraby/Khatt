@@ -34,7 +34,8 @@ describe('typography and direction css', () => {
     const on = baseCss({ ...DEFAULT_SETTINGS, lineHeight: 1.7, wordSpacing: 0.1, fixDirection: true });
     expect(on).toContain('word-spacing:0.1em !important');
     expect(on).toContain('unicode-bidi:plaintext');
-    expect(on).toContain('[data-khatt-dir="rtl"]:not(#k_):not(#k_){direction:rtl');
+    expect(on).toContain('[data-khatt-dir="rtl-bidi"]:not(#k_):not(#k_){direction:rtl !important}');
+    expect(on).toContain('[data-khatt-dir="rtl"]:not(#k_):not(#k_){text-align:start !important}');
     // Only elements whose own line height is below 1.7 are raised.
     expect(on).toContain('[data-khatt-prose="16"]');
     expect(on).not.toContain('[data-khatt-prose="17"]');

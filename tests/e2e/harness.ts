@@ -71,6 +71,17 @@ self.addEventListener('fetch', (e) => {
 const SW_PAGE =
   '<!doctype html><html><head><meta charset="utf-8"><style>body{font:16px Georgia,serif}</style></head><body><p id="arabic">صفحة يتحكم بها عامل خدمة يرفض طلبات الإضافات.</p><h2 id="heading">عنوان</h2></body></html>';
 
+const SLOW_CSS =
+  '.late{font-family:Verdana,sans-serif;line-height:2.6}.center{text-align:center}.rtl{direction:rtl}';
+
+/** The stylesheet link sits after the content, so the content is shown (and tagged) before it loads. */
+const LATE_CSS_PAGE =
+  '<!doctype html><html lang="en"><head><meta charset="utf-8"><style>body{width:500px}</style></head><body>' +
+  '<p id="late" class="late">فقرة عربية تصل ورقة أنماطها متأخرة بعد أن عرضت الصفحة ووسمت عناصرها.</p>' +
+  '<p id="late-center" class="center">فقرة في الوسط.</p>' +
+  '<p id="late-rtl" class="rtl">فقرة يجعلها الموقع من اليمين.</p>' +
+  '<link rel="stylesheet" href="/slow.css"></body></html>';
+
 const DESIGN_PAGE =
   '<!doctype html><html><head><meta charset="utf-8"><script>document.designMode = "on";</script></head><body><p id="p">نص عربي في مستند قابل للتحرير</p></body></html>';
 
@@ -94,6 +105,19 @@ export async function launch(): Promise<Harness> {
       res.end(SW_PAGE);
       return;
     }
+    if (url.pathname === '/slow.css') {
+      // Arrives well after the page's content has been shown and tagged.
+      setTimeout(() => {
+        res.writeHead(200, { 'Content-Type': 'text/css' });
+        res.end(SLOW_CSS);
+      }, 700);
+      return;
+    }
+    if (url.pathname === '/late-css') {
+      res.writeHead(200, headers);
+      res.end(LATE_CSS_PAGE);
+      return;
+    }
     if (url.pathname === '/design') {
       res.writeHead(200, headers);
       res.end(DESIGN_PAGE);
@@ -104,6 +128,8 @@ export async function launch(): Promise<Harness> {
       '/typo': 'typo.html',
       '/extras': 'extras.html',
       '/hard': 'hard.html',
+      '/review': 'review.html',
+      '/dirauto': 'dirauto.html',
     };
     const name = pages[url.pathname] ?? 'basic.html';
     if (name === 'csp.html') headers['Content-Security-Policy'] = STRICT_CSP;

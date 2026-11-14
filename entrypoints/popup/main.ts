@@ -1,4 +1,5 @@
 import { browser } from 'wxt/browser';
+import { effectiveFontId } from '@/lib/fonts';
 import { ENSURE_MESSAGE, type EnsureStatus } from '@/lib/messages';
 import { matchingPreset, PRESETS } from '@/lib/presets';
 import { hasOverrides, resolveSettings, type Settings } from '@/lib/settings';
@@ -90,8 +91,13 @@ let scope: Scope = 'all';
 let systemFont = '';
 /** The system font the font list was last built with; null = not built yet. */
 let listedSystemFont: string | null = null;
+/** The font card last scrolled into view, so the list only moves when the choice does. */
+let shownFontId: string | null = null;
 
-/** The site of the tab the popup was opened on; null where Khatt cannot run. */
+/**
+ * The site of the tab the popup was opened on; null where Khatt cannot run.
+ * Local files have no hostname and share the empty one.
+ */
 async function currentHost(): Promise<string | null> {
   // `?host=` lets the popup be opened as a normal page (tests, debugging).
   const override = new URLSearchParams(location.search).get('host');
@@ -99,6 +105,7 @@ async function currentHost(): Promise<string | null> {
   try {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     const url = new URL(tab?.url ?? '');
+    if (url.protocol === 'file:') return '';
     return /^https?:$/.test(url.protocol) && url.hostname ? url.hostname : null;
   } catch {
     return null;
@@ -117,8 +124,13 @@ async function ensureActiveTab(): Promise<void> {
     const reply = (await browser.runtime.sendMessage({ type: ENSURE_MESSAGE, tabId: tab.id })) as
       | { status?: EnsureStatus }
       | undefined;
-    // Only when Khatt could not be started there does the page need a manual refresh.
-    $('needs-refresh').hidden = reply?.status !== 'failed';
+    // Some pages look like ordinary sites but are closed to extensions (the Web Store,
+    // the PDF viewer, error pages). Refreshing would not help, so say Khatt can't run.
+    if (reply?.status === 'failed') {
+      host = null;
+      scope = 'all';
+      render();
+    }
   } catch {
     // Background unavailable — settings still save and apply on the next page load.
   }
@@ -151,10 +163,12 @@ function render(): void {
   const globalOn = resolveSettings(raw.global).enabled;
   master.checked = globalOn;
   controls.classList.toggle('off', !globalOn);
+  // Not just dimmed: out of the tab order and hidden from assistive technology too.
+  controls.inert = !globalOn;
 
   siteSection.hidden = host === null;
   unavailable.hidden = host !== null;
-  hostLabel.textContent = host ?? '';
+  hostLabel.textContent = host === '' ? t('localFiles') : (host ?? '');
   siteEnabled.checked = raw.site.enabled !== false;
 
   for (const input of scopeInputs) {
@@ -165,9 +179,14 @@ function render(): void {
 
   const s = shown();
   buildFontList();
-  checkFontCard(fontList, s.fontId);
-  // The list scrolls; keep the chosen font in view.
-  fontList.querySelector('input:checked')?.closest('label')?.scrollIntoView({ block: 'nearest' });
+  const fontId = effectiveFontId(s.fontId, systemFont);
+  checkFontCard(fontList, fontId);
+  // The list scrolls: bring the chosen font into view, but only when the choice changes,
+  // so toggling another control does not yank the list back.
+  if (fontId !== shownFontId) {
+    shownFontId = fontId;
+    fontList.querySelector('input:checked')?.closest('label')?.scrollIntoView({ block: 'nearest' });
+  }
   const active = matchingPreset(s)?.id;
   for (const button of presetList.querySelectorAll<HTMLButtonElement>('button')) {
     button.setAttribute('aria-pressed', String(button.dataset.preset === active));
@@ -192,14 +211,17 @@ async function reload(): Promise<void> {
   }
 }
 
-/** Runs a storage write, then re-reads so the popup always shows what is stored. */
+/**
+ * Runs a storage write. A successful write comes back through the storage listener,
+ * which re-renders; only a failed one needs re-reading here, to undo the control.
+ */
 async function commit(write: () => Promise<void>): Promise<void> {
   try {
     await write();
   } catch (err) {
     console.error('[Khatt] could not save settings', err);
+    await reload();
   }
-  await reload();
 }
 
 function save(patch: Partial<Settings>): Promise<void> {
@@ -228,6 +250,7 @@ function bind(): void {
     const target = host;
     if (target === null) return;
     scope = 'all';
+    render();
     void commit(() => clearSiteOverrides(target));
   });
 
@@ -238,18 +261,23 @@ function bind(): void {
   numerals.addEventListener('change', () => void save({ numerals: numerals.value as Numerals }));
   justify.addEventListener('change', () => void save({ justify: justify.checked }));
 
-  // Synced storage limits write frequency, so slider drags are debounced.
+  // Synced storage limits write frequency, so slider drags are debounced — but the
+  // value is written at once when the drag ends or the popup closes, so it is never lost.
+  const flush = (slider: Slider) => {
+    if (!slider.timer) return;
+    clearTimeout(slider.timer);
+    slider.timer = undefined;
+    void save({ [slider.key]: slider.toSetting(Number(slider.input.value)) });
+  };
   for (const slider of sliders) {
     slider.input.addEventListener('input', () => {
-      const position = Number(slider.input.value);
-      slider.output.textContent = slider.format(position);
+      slider.output.textContent = slider.format(Number(slider.input.value));
       clearTimeout(slider.timer);
-      slider.timer = setTimeout(() => {
-        slider.timer = undefined;
-        void save({ [slider.key]: slider.toSetting(position) });
-      }, 150);
+      slider.timer = setTimeout(() => flush(slider), 150);
     });
+    slider.input.addEventListener('change', () => flush(slider));
   }
+  window.addEventListener('pagehide', () => sliders.forEach(flush));
 }
 
 async function init(): Promise<void> {

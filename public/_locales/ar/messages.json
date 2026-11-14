@@ -93,7 +93,7 @@
     "message": "عربية 123"
   },
   "justifyLabel": {
-    "message": "ضبط الفقرات"
+    "message": "ضبط الفقرات (تجريبي)"
   },
   "moreOptions": {
     "message": "خطوط وخيارات أكثر"
@@ -194,7 +194,13 @@
   "backupConfirm": {
     "message": "هل تريد استبدال كل إعدادات خط الحالية بما في هذا الملف؟"
   },
-  "needsRefresh": {
-    "message": "أعد تحميل هذه الصفحة مرة واحدة لتطبيق خط عليها."
+  "localFiles": {
+    "message": "ملفات محلية"
+  },
+  "cancel": {
+    "message": "إلغاء"
+  },
+  "backupReplace": {
+    "message": "استبدال الإعدادات"
   }
 }

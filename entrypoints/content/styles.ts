@@ -47,7 +47,23 @@ export class StyleManager {
     return entry.token;
   }
 
+  /** False once the page has removed Khatt's stylesheet (or before it was first written). */
+  get attached(): boolean {
+    return this.styleEl?.isConnected === true;
+  }
+
+  /**
+   * Switches all of Khatt's rules off or on, in the document and in shadow roots.
+   * Used to read what the page's own styles say about an element.
+   */
+  setDisabled(disabled: boolean): void {
+    if (this.styleEl) this.styleEl.disabled = disabled;
+    if (this.shadowSheet) this.shadowSheet.disabled = disabled;
+  }
+
   flush(): void {
+    // Nowhere to put the stylesheet yet: stay dirty so the next flush writes it.
+    if (!document.documentElement) return;
     const attached = this.ensureAttached();
     if (!this.dirty && attached) return;
     const shared = this.sharedCss();
@@ -103,10 +119,8 @@ export class StyleManager {
   /** Returns false when the <style> had to be (re)created and therefore needs its content written. */
   private ensureAttached(): boolean {
     if (this.styleEl?.isConnected) return true;
-    const parent = document.documentElement;
-    if (!parent) return true;
     this.styleEl ??= Object.assign(document.createElement('style'), { id: STYLE_ID });
-    parent.append(this.styleEl);
+    document.documentElement.append(this.styleEl);
     return false;
   }
 }

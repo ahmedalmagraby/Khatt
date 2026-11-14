@@ -93,7 +93,7 @@
     "message": "Western 123"
   },
   "justifyLabel": {
-    "message": "Justify paragraphs"
+    "message": "Justify paragraphs (experimental)"
   },
   "moreOptions": {
     "message": "More fonts and options"
@@ -194,7 +194,13 @@
   "backupConfirm": {
     "message": "Replace all current Khatt settings with the ones in this file?"
   },
-  "needsRefresh": {
-    "message": "Refresh this page once to apply Khatt here."
+  "localFiles": {
+    "message": "Local files"
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "backupReplace": {
+    "message": "Replace settings"
   }
 }

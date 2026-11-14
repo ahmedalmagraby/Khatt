@@ -89,3 +89,13 @@ export const SYSTEM_FONT_ID = 'system';
 export function getFont(id: string): BundledFont {
   return BUNDLED_FONTS.find((f) => f.id === id) ?? BUNDLED_FONTS[0]!;
 }
+
+/**
+ * The font actually in use for a stored choice. The system-font choice only counts
+ * where a font name is known on this device (the name is not synced), and an
+ * unknown id falls back to the default — so the pickers always show a selection.
+ */
+export function effectiveFontId(fontId: string, systemFont: string): string {
+  if (fontId === SYSTEM_FONT_ID) return systemFont.trim() ? SYSTEM_FONT_ID : DEFAULT_FONT_ID;
+  return getFont(fontId).id;
+}

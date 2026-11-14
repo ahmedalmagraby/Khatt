@@ -75,7 +75,7 @@ test('removes letter-spacing and applies word spacing to Arabic text', async () 
 });
 
 test('right-aligns Arabic paragraphs on an LTR page without touching the rest', async () => {
-  await expect(page.locator('#ar-p')).toHaveAttribute('data-khatt-dir', 'auto');
+  await expect(page.locator('#ar-p')).toHaveAttribute('data-khatt-dir', 'rtl');
   const arabic = await textGaps('#ar-p');
   expect(arabic.right).toBeLessThan(2);
   expect(arabic.left).toBeGreaterThan(5);
@@ -85,7 +85,7 @@ test('right-aligns Arabic paragraphs on an LTR page without touching the rest', 
   await expect(page.locator('#en-p')).not.toHaveAttribute('data-khatt-dir', /.*/);
 
   // Text in an inline element fixes the block that lays it out.
-  await expect(page.locator('#span-p')).toHaveAttribute('data-khatt-dir', 'auto');
+  await expect(page.locator('#span-p')).toHaveAttribute('data-khatt-dir', 'rtl');
   await expect(page.locator('#sp')).not.toHaveAttribute('data-khatt-dir', /.*/);
   expect((await textGaps('#span-p')).right).toBeLessThan(2);
 
@@ -140,7 +140,7 @@ test('direction fixing can be switched off and back on live', async () => {
   expect((await textGaps('#ar-p')).left).toBeLessThan(2);
 
   await h.setStorage({ global: { fixDirection: true } });
-  await expect(page.locator('#ar-p')).toHaveAttribute('data-khatt-dir', 'auto');
+  await expect(page.locator('#ar-p')).toHaveAttribute('data-khatt-dir', 'rtl');
   await expect(page.locator('#field')).toHaveAttribute('dir', 'auto');
 });
 

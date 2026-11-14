@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — review points</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 520px; margin: 20px; }
+    </style>
+  </head>
+  <body>
+    <!-- A byte-order mark / zero-width no-break space inside plain English text. -->
+    <p id="bom">Hello&#xFEFF; world, 2024 edition</p>
+
+    <!-- Style and script inside SVG live in the SVG namespace (lower-case tag names). -->
+    <svg id="svg" width="200" height="40" xmlns="http://www.w3.org/2000/svg">
+      <style id="svg-style">/* عنوان 2024 */ .a { stroke-width: 2px; }</style>
+      <text id="svg-text" x="190" y="25" text-anchor="end">نص داخل رسم 15</text>
+    </svg>
+
+    <!-- Form controls whose text is not a child text node of the element that draws it. -->
+    <select id="sel"><option>العربية</option><option>English</option></select>
+    <input id="submit" type="submit" value="إرسال" />
+    <input id="email" type="email" placeholder="البريد الإلكتروني" />
+    <input id="checkbox" type="checkbox" />
+
+    <!-- Text that will be replaced with English in place. -->
+    <p id="reused">هذا نص عربي سيستبدل بنص إنجليزي لاحقا في العنصر نفسه.</p>
+
+    <!-- Mostly non-Arabic blocks that merely start with Arabic. -->
+    <div id="langs"><a id="lang-ar" href="#">العربية</a> · <a href="#">English</a> · <a href="#">Français</a> · <a href="#">Deutsch</a></div>
+    <p id="quote">"مرحبا" is the Arabic word for hello, and it is used across the Middle East every day.</p>
+    <p id="mostly-ar">iPhone هو هاتف ذكي تنتجه شركة معروفة ويستخدمه كثير من الناس.</p>
+
+    <!-- Lists that change after they were first judged. -->
+    <ul id="shrinking"><li>عنصر عربي</li></ul>
+    <ul id="growing"><li>Header</li></ul>
+
+    <!-- Numbers in their own element, and technical tokens. -->
+    <p id="split">عام <b id="year">2024</b> شهد <span id="count">15</span> حدثا</p>
+    <p id="tech">الإصدار v2.4.1 متاح على https://example.com/2026 منذ 2026</p>
+  </body>
+</html>

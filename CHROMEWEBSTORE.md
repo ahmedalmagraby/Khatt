@@ -89,9 +89,8 @@ All screenshots are taken from the real extension running in Chromium on local d
 | Permission | Type | Justification |
 |------------|------|---------------|
 | `storage` | permissions | Saves the user's display choices (font, size, spacing, direction and reading-aid switches) and the list of sites where they turned the extension off or customised it, so the choices persist and sync across the user's devices. |
-| `activeTab` | permissions | When the user clicks the toolbar icon, the popup reads the address of the current tab so it can show and save the "Enabled on this site" switch and "This site only" settings for that site. No access is used outside that click. |
 | `scripting` | permissions | Starts the extension in tabs that were already open when it was installed or updated, so the user does not have to refresh every open page. It only ever runs the extension's own bundled content scripts — the same ones Chrome injects on page load. |
-| `<all_urls>` (host permission and content scripts) | host_permissions | The single purpose is restyling Arabic text wherever it appears, and Arabic text can appear on any site (news, social media, mail, search results, mixed-language pages), so the user cannot list sites in advance. On each page the script checks text for Arabic-script characters and marks those elements so a font and spacing rule applies to them. This happens locally; no page content is stored or transmitted. The user can turn it off per site. The host permission (rather than content-script matches alone) is what allows starting in already-open tabs, as described for `scripting`. |
+| `<all_urls>` (host permission and content scripts) | host_permissions | The single purpose is restyling Arabic text wherever it appears, and Arabic text can appear on any site (news, social media, mail, search results, mixed-language pages), so the user cannot list sites in advance. On each page the script checks text for Arabic-script characters and marks those elements so a font and spacing rule applies to them. This happens locally; no page content is stored or transmitted. The user can turn it off per site. The host permission (rather than content-script matches alone) is what allows starting in already-open tabs, as described for `scripting`, and lets the popup read the current tab's address to show and save that site's own settings. |
 
 **Other items a reviewer may ask about**
 
@@ -159,11 +158,11 @@ One thing to answer carefully in the dashboard form: settings are saved with Chr
 Done and verified:
 
 - Manifest V3; name and description come from the locale files and match this document; description is 129 characters.
-- Permissions: `storage`, `activeTab`, `scripting`, plus access to all sites. No `tabs` permission and no remote servers.
+- Permissions: `storage`, `scripting`, plus access to all sites. No `tabs` or `activeTab` permission and no remote servers.
 - No remote code, no obfuscation (standard minified build), no network requests.
 - Icons are real PNGs at 16, 32, 48 and 128 px.
 - Package contains only the built extension: `npm run zip` → `.output/khatt-0.1.0-chrome.zip`.
-- Automated tests pass: 33 unit tests and 45 tests in a real browser with the extension loaded.
+- Automated tests pass: 44 unit tests and 67 tests in a real browser with the extension loaded.
 - Checked on live pages: Arabic and English Wikipedia, Al Jazeera, BBC Arabic / Persian / Urdu, GitHub.
 
 Still to do before submitting:
