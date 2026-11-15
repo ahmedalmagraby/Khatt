@@ -185,6 +185,73 @@ select {
   min-width: 240px;
 }
 
+/* Installed-font field with its list of suggestions */
+.combo {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.combo input {
+  width: 100%;
+}
+
+[role="listbox"] {
+  position: absolute;
+  z-index: 10;
+  inset-inline: 0;
+  top: calc(100% + 6px);
+  max-height: 296px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.16);
+  scrollbar-width: thin;
+}
+
+[role="option"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  /* Hundreds of fonts: only the rows in view are laid out (and their fonts loaded). */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 36px;
+}
+
+[role="option"]:hover,
+[role="option"][aria-selected="true"] {
+  background: var(--surface);
+}
+
+[role="option"][aria-selected="true"] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.option-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.option-sample {
+  flex: none;
+  color: var(--muted);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
 button {
   padding: 7px 14px;
   border: 1px solid var(--line);

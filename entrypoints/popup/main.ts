@@ -2,7 +2,16 @@ import { browser } from 'wxt/browser';
 import { effectiveFontId } from '@/lib/fonts';
 import { ENSURE_MESSAGE, type EnsureStatus } from '@/lib/messages';
 import { matchingPreset, PRESETS } from '@/lib/presets';
-import { hasOverrides, resolveSettings, type Settings } from '@/lib/settings';
+import {
+  hasOverrides,
+  LINE_HEIGHT_MAX,
+  LINE_HEIGHT_MIN,
+  resolveSettings,
+  SIZE_MAX,
+  SIZE_MIN,
+  WORD_SPACING_MAX,
+  type Settings,
+} from '@/lib/settings';
 import {
   clearSiteOverrides,
   loadRaw,
@@ -48,6 +57,9 @@ interface Slider {
   input: HTMLInputElement;
   output: HTMLElement;
   key: NumericKey;
+  /** The slider's range, taken from the limits the settings themselves are held to. */
+  min: number;
+  max: number;
   /** Slider position → stored value, and back. */
   toSetting(position: number): number;
   fromSetting(value: number): number;
@@ -55,13 +67,16 @@ interface Slider {
   timer?: ReturnType<typeof setTimeout>;
 }
 
-const LINE_HEIGHT_OFF = 1.3;
+/** One step below the smallest line height: the slider's "off" position. */
+const LINE_HEIGHT_OFF = Math.round((LINE_HEIGHT_MIN - 0.1) * 10) / 10;
 
 const sliders: Slider[] = [
   {
     input: $<HTMLInputElement>('size'),
     output: $('size-value'),
     key: 'sizeAdjust',
+    min: SIZE_MIN,
+    max: SIZE_MAX,
     toSetting: (p) => p,
     fromSetting: (v) => v,
     format: (p) => `${p}%`,
@@ -71,6 +86,8 @@ const sliders: Slider[] = [
     input: $<HTMLInputElement>('line-height'),
     output: $('line-height-value'),
     key: 'lineHeight',
+    min: LINE_HEIGHT_OFF,
+    max: LINE_HEIGHT_MAX,
     toSetting: (p) => (p <= LINE_HEIGHT_OFF ? 0 : p),
     fromSetting: (v) => (v <= 0 ? LINE_HEIGHT_OFF : v),
     format: (p) => (p <= LINE_HEIGHT_OFF ? t('off') : p.toFixed(1)),
@@ -79,6 +96,8 @@ const sliders: Slider[] = [
     input: $<HTMLInputElement>('word-spacing'),
     output: $('word-spacing-value'),
     key: 'wordSpacing',
+    min: 0,
+    max: WORD_SPACING_MAX,
     toSetting: (p) => p,
     fromSetting: (v) => v,
     format: (p) => (p <= 0 ? t('off') : `+${p.toFixed(2)}em`),
@@ -270,6 +289,8 @@ function bind(): void {
     void save({ [slider.key]: slider.toSetting(Number(slider.input.value)) });
   };
   for (const slider of sliders) {
+    slider.input.min = String(slider.min);
+    slider.input.max = String(slider.max);
     slider.input.addEventListener('input', () => {
       slider.output.textContent = slider.format(Number(slider.input.value));
       clearTimeout(slider.timer);

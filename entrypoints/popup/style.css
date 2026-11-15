@@ -395,3 +395,33 @@ footer {
 .option > label {
   cursor: pointer;
 }
+
+/* High-contrast mode drops backgrounds and shadows, which is all a switch is drawn with. */
+@media (forced-colors: active) {
+  .track {
+    box-sizing: border-box;
+    border: 1px solid ButtonText;
+    background: Canvas;
+  }
+
+  .track::after {
+    top: 1px;
+    inset-inline-start: 1px;
+    background: ButtonText;
+    box-shadow: none;
+  }
+
+  .switch input:checked + .track {
+    border-color: Highlight;
+    background: Highlight;
+  }
+
+  .switch input:checked + .track::after {
+    inset-inline-start: 21px;
+    background: HighlightText;
+  }
+
+  .switch input:focus-visible + .track {
+    outline-color: Highlight;
+  }
+}

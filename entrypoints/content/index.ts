@@ -16,14 +16,27 @@ import { FontLoader } from './font-loader';
 import { Scanner } from './scanner';
 import { StyleManager } from './styles';
 
-/** Frames without their own host (about:blank, srcdoc) follow the top page when reachable. */
-function currentHost(): string {
+/**
+ * The site whose settings apply here. Frames without a host of their own (about:blank,
+ * srcdoc, sandboxed) follow the top page. Local files share the empty host; null means
+ * the site cannot be told, and only the global settings apply.
+ */
+function currentHost(): string | null {
   if (location.hostname) return location.hostname;
+  if (location.protocol === 'file:') return '';
+  let top: URL | null = null;
   try {
-    return window.top?.location.hostname ?? '';
+    top = new URL(window.top!.location.href);
   } catch {
-    return '';
+    // The top page is out of reach (another origin, or this frame is sandboxed), but
+    // its origin is still listed.
+    const origins = location.ancestorOrigins;
+    const origin = origins?.[origins.length - 1];
+    if (origin && URL.canParse(origin)) top = new URL(origin);
   }
+  if (!top) return null;
+  if (top.protocol === 'file:') return '';
+  return top.hostname || null;
 }
 
 const fontUrl = (file: string) => browser.runtime.getURL(`/fonts/${file}` as never);
@@ -149,7 +162,8 @@ export default defineContentScript({
     document.addEventListener(TAKEOVER_EVENT, shutdown);
     ctx.onInvalidated(shutdown);
 
+    // Watching starts before the first read, so a change made during it is not missed.
+    unwatch = watchStorage(host, () => void refresh());
     await refresh();
-    if (!stopped) unwatch = watchStorage(host, () => void refresh());
   },
 });

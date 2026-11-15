@@ -2,6 +2,7 @@ import {
   DEFAULT_SETTINGS,
   GLOBAL_KEY,
   isEmptySite,
+  normalizeSetting,
   SETTINGS_VERSION,
   VERSION_KEY,
   type Settings,
@@ -43,7 +44,7 @@ export function parseBackup(json: string): Record<string, unknown> {
   return sanitizeData(parsed.data);
 }
 
-/** Keeps only known keys with values of the expected type, so storage never holds junk. */
+/** Keeps only known keys with usable values (numbers brought into range), so storage never holds junk. */
 export function sanitizeData(data: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { [VERSION_KEY]: SETTINGS_VERSION };
   const global = sanitizeSettings(data[GLOBAL_KEY]);
@@ -64,9 +65,9 @@ export function sanitizeData(data: Record<string, unknown>): Record<string, unkn
 function sanitizeSettings(value: unknown): Partial<Settings> {
   const out: Record<string, unknown> = {};
   if (!isRecord(value)) return out;
-  for (const [key, fallback] of Object.entries(DEFAULT_SETTINGS)) {
-    const v = value[key];
-    if (typeof v === typeof fallback && (typeof v !== 'number' || Number.isFinite(v))) out[key] = v;
+  for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+    const v = normalizeSetting(key, value[key]);
+    if (v !== undefined) out[key] = v;
   }
   return out as Partial<Settings>;
 }

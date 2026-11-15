@@ -15,7 +15,7 @@
     </header>
 
     <main>
-      <section aria-labelledby="font-heading">
+      <section>
         <h2 id="font-heading" data-i18n="bodyFontHeading"></h2>
         <fieldset class="fonts">
           <legend class="sr-only" data-i18n="bodyFontHeading"></legend>
@@ -23,22 +23,27 @@
         </fieldset>
       </section>
 
-      <section aria-labelledby="system-heading">
+      <section>
         <h2 id="system-heading" data-i18n="systemFontHeading"></h2>
         <p id="system-intro" class="muted" data-i18n="systemFontIntro"></p>
         <form id="system-form" class="inline">
-          <input
-            type="text"
-            id="system-font"
-            aria-labelledby="system-heading"
-            aria-describedby="system-intro"
-            list="installed-fonts"
-            autocomplete="off"
-            spellcheck="false"
-            dir="ltr"
-            data-i18n-placeholder="systemFontPlaceholder"
-          />
-          <datalist id="installed-fonts"></datalist>
+          <div class="combo">
+            <input
+              type="text"
+              id="system-font"
+              role="combobox"
+              aria-labelledby="system-heading"
+              aria-describedby="system-intro"
+              aria-autocomplete="list"
+              aria-expanded="false"
+              aria-controls="installed-fonts"
+              autocomplete="off"
+              spellcheck="false"
+              dir="ltr"
+              data-i18n-placeholder="systemFontPlaceholder"
+            />
+            <ul id="installed-fonts" role="listbox" aria-labelledby="system-heading" dir="ltr" hidden></ul>
+          </div>
           <button type="submit" id="use-system" class="primary" data-i18n="systemFontUse"></button>
           <button type="button" id="clear-system" data-i18n="systemFontClear"></button>
         </form>
@@ -47,20 +52,20 @@
         <p id="system-status" class="muted" role="status"></p>
       </section>
 
-      <section aria-labelledby="heading-font-heading">
+      <section>
         <h2 id="heading-font-heading" data-i18n="headingFontHeading"></h2>
         <p class="muted" data-i18n="headingFontIntro"></p>
         <select id="heading-font" aria-labelledby="heading-font-heading"></select>
       </section>
 
-      <section aria-labelledby="sites-heading">
+      <section>
         <h2 id="sites-heading" data-i18n="sitesHeading"></h2>
         <p class="muted" data-i18n="sitesIntro"></p>
         <ul id="site-list" role="list"></ul>
         <p id="sites-empty" class="muted" data-i18n="sitesEmpty" hidden></p>
       </section>
 
-      <section aria-labelledby="backup-heading">
+      <section>
         <h2 id="backup-heading" data-i18n="backupHeading"></h2>
         <p class="muted" data-i18n="backupIntro"></p>
         <div class="inline">

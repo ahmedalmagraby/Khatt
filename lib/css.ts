@@ -16,6 +16,11 @@ export const DIR_ATTR = 'data-khatt-dir';
 export const AUTO_DIR_ATTR = 'data-khatt-auto-dir';
 /** On prose blocks whose own alignment is plain enough to be justified. */
 export const JUSTIFY_ATTR = 'data-khatt-justify';
+/**
+ * On tagged form controls and editors that hold no Arabic right now. They get the
+ * font (Arabic may be typed later) but keep the site's letter and word spacing.
+ */
+export const PLAIN_ATTR = 'data-khatt-plain';
 export const STYLE_ID = 'khatt-style';
 /** Announces a shadow root attached to an element already on the page (see shadow-hook). */
 export const SHADOW_EVENT = 'khatt:shadow';
@@ -40,10 +45,11 @@ export function lineHeightBucket(lineHeight: string, fontSize: string): number {
 /** Typography and direction rules for tagged elements; used in the document and in shadow roots. */
 export function baseCss(settings: Settings): string {
   const rules: string[] = [];
-  // Letter-spacing breaks the joining of Arabic letters.
+  // Letter-spacing breaks the joining of Arabic letters. Controls without Arabic in
+  // them (an English "SIGN IN" button) keep the tracking their site gave them.
   const spacing =
     settings.wordSpacing > 0 ? `;word-spacing:${settings.wordSpacing}em !important` : '';
-  rules.push(`[${ATTR}]${BOOST}{letter-spacing:0 !important${spacing}}`);
+  rules.push(`[${ATTR}]:not([${PLAIN_ATTR}])${BOOST}{letter-spacing:0 !important${spacing}}`);
 
   // Raise the line height of prose only where the site's own is below the minimum.
   if (settings.lineHeight > 0) {
@@ -116,8 +122,9 @@ export function systemFontFaceCss(
 ): string {
   const clean = cleanFontName(name);
   const tail = `font-style:normal;size-adjust:${Math.round(sizePercent)}%;unicode-range:${ARABIC_UNICODE_RANGE}}`;
+  // local() matches a face's full name, which for some fonts spells out "Regular".
   return (
-    `@font-face{font-family:"${family}";src:local("${clean}");font-weight:400;${tail}\n` +
+    `@font-face{font-family:"${family}";src:local("${clean}"),local("${clean} Regular");font-weight:400;${tail}\n` +
     `@font-face{font-family:"${family}";src:local("${clean} Bold"),local("${clean}");font-weight:700;${tail}`
   );
 }

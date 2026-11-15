@@ -137,6 +137,9 @@
   "systemFontEmpty": {
     "message": "Type a font name first."
   },
+  "systemFontMissing": {
+    "message": "“$1” does not seem to be installed on this computer. Check the spelling; until it is found, pages keep their own font."
+  },
   "headingFontHeading": {
     "message": "Heading font"
   },

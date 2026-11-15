@@ -65,6 +65,44 @@ test('a font installed on the computer can be used, and cleared', async () => {
   expect(await h.getLocal()).not.toHaveProperty('systemFont');
 });
 
+test('installed fonts are suggested in a list that filters as you type and works by keyboard', async () => {
+  // Stand in for the Local Font Access API, which needs a permission prompt.
+  await options.evaluate(() => {
+    const names = ['Arial', 'Calibri', 'Sakkal Majalla', 'Segoe UI', 'Tahoma', 'Times New Roman', 'Traditional Arabic'];
+    window.queryLocalFonts = async () => names.flatMap((family) => [{ family }, { family }]);
+  });
+  const field = options.getByRole('combobox', { name: 'Font installed on this computer' });
+  const list = options.getByRole('listbox');
+  await expect(list).toBeHidden();
+
+  await options.locator('#load-installed').evaluate((el) => {
+    (el as HTMLElement).hidden = false;
+    (el as HTMLElement).click();
+  });
+  await expect(list.getByRole('option')).toHaveCount(7);
+  await expect(field).toHaveAttribute('aria-expanded', 'true');
+
+  // Typing narrows the list; arrows and Enter pick from it without applying yet.
+  await field.fill('ar');
+  await expect(list.getByRole('option')).toHaveText([/^Arial/, /^Traditional Arabic/]);
+  await field.press('ArrowDown');
+  await field.press('ArrowDown');
+  await expect(list.getByRole('option', { selected: true })).toHaveText(/^Traditional Arabic/);
+  await field.press('Enter');
+  await expect(field).toHaveValue('Traditional Arabic');
+  await expect(list).toBeHidden();
+  expect(await h.getLocal()).not.toHaveProperty('systemFont');
+
+  // A click picks too, and Escape closes the list.
+  await field.fill('seg');
+  await list.getByRole('option', { name: 'Segoe UI' }).click();
+  await expect(field).toHaveValue('Segoe UI');
+  await field.fill('a');
+  await expect(list).toBeVisible();
+  await field.press('Escape');
+  await expect(list).toBeHidden();
+});
+
 test('an empty installed-font name is refused', async () => {
   await options.locator('#use-system').click();
   await expect(options.locator('#system-status')).toHaveClass(/error/);

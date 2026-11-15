@@ -98,3 +98,26 @@ describe('backup of local-file settings', () => {
     expect(parseBackup(JSON.stringify(buildBackup(data)))).toEqual(data);
   });
 });
+
+describe('second review', () => {
+  it('keeps the digits of a number that follows a Latin name', () => {
+    expect(toArabicIndicDigitsInProse('نظام Windows 11 صدر عام 2021')).toBe('نظام Windows 11 صدر عام ٢٠٢١');
+    expect(toArabicIndicDigitsInProse('هاتف iPhone 16 بسعر 999 دولار')).toBe('هاتف iPhone 16 بسعر ٩٩٩ دولار');
+    // Latin letters outside ASCII mark a technical token too.
+    expect(toArabicIndicDigitsInProse('مقهى Café2 في 2024')).toBe('مقهى Café2 في ٢٠٢٤');
+  });
+
+  it('brings imported numbers into the range the popup can show and drops unknown choices', () => {
+    const data = parseBackup(
+      JSON.stringify({
+        app: 'khatt',
+        data: {
+          global: { sizeAdjust: 180, lineHeight: 1.2, wordSpacing: 2, numerals: 'roman', fontId: 'amiri' },
+          'site:a.example': { overrides: { lineHeight: -3, sizeAdjust: 10, numerals: 'western' } },
+        },
+      }),
+    );
+    expect(data.global).toEqual({ sizeAdjust: 140, lineHeight: 1.4, wordSpacing: 0.3, fontId: 'amiri' });
+    expect(data['site:a.example']).toEqual({ overrides: { lineHeight: 0, sizeAdjust: 80, numerals: 'western' } });
+  });
+});

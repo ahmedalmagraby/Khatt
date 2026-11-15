@@ -29,7 +29,7 @@ describe('typography and direction css', () => {
 
   it('always removes letter-spacing and only adds what is switched on', () => {
     const off = baseCss({ ...DEFAULT_SETTINGS, lineHeight: 0, wordSpacing: 0, fixDirection: false });
-    expect(off).toBe('[data-khatt]:not(#k_):not(#k_){letter-spacing:0 !important}');
+    expect(off).toBe('[data-khatt]:not([data-khatt-plain]):not(#k_):not(#k_){letter-spacing:0 !important}');
 
     const on = baseCss({ ...DEFAULT_SETTINGS, lineHeight: 1.7, wordSpacing: 0.1, fixDirection: true });
     expect(on).toContain('word-spacing:0.1em !important');
@@ -43,10 +43,10 @@ describe('typography and direction css', () => {
   });
 
   it('clamps the new settings', () => {
-    expect(resolveSettings({ lineHeight: 9 }).lineHeight).toBe(3);
-    expect(resolveSettings({ lineHeight: 0.5 }).lineHeight).toBe(1.2);
+    expect(resolveSettings({ lineHeight: 9 }).lineHeight).toBe(2.4);
+    expect(resolveSettings({ lineHeight: 0.5 }).lineHeight).toBe(1.4);
     expect(resolveSettings({ lineHeight: 0 }).lineHeight).toBe(0);
-    expect(resolveSettings({ wordSpacing: 4 }).wordSpacing).toBe(0.5);
+    expect(resolveSettings({ wordSpacing: 4 }).wordSpacing).toBe(0.3);
     expect(resolveSettings({ wordSpacing: -1 }).wordSpacing).toBe(0);
     expect(resolveSettings({ fixDirection: false }).fixDirection).toBe(false);
   });
@@ -143,8 +143,8 @@ describe('settings resolution', () => {
   });
 
   it('clamps size and ignores undefined values', () => {
-    expect(resolveSettings({ sizeAdjust: 999 }).sizeAdjust).toBe(200);
-    expect(resolveSettings({ sizeAdjust: 1 }).sizeAdjust).toBe(50);
+    expect(resolveSettings({ sizeAdjust: 999 }).sizeAdjust).toBe(140);
+    expect(resolveSettings({ sizeAdjust: 1 }).sizeAdjust).toBe(80);
     expect(resolveSettings({ fontId: undefined }).fontId).toBe(DEFAULT_SETTINGS.fontId);
   });
 });

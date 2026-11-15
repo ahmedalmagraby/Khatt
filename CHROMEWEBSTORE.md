@@ -162,7 +162,7 @@ Done and verified:
 - No remote code, no obfuscation (standard minified build), no network requests.
 - Icons are real PNGs at 16, 32, 48 and 128 px.
 - Package contains only the built extension: `npm run zip` → `.output/khatt-0.1.0-chrome.zip`.
-- Automated tests pass: 44 unit tests and 67 tests in a real browser with the extension loaded.
+- Automated tests pass: 46 unit tests and 80 tests in a real browser with the extension loaded.
 - Checked on live pages: Arabic and English Wikipedia, Al Jazeera, BBC Arabic / Persian / Urdu, GitHub.
 
 Still to do before submitting:

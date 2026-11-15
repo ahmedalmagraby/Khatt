@@ -1,4 +1,4 @@
-import { arabicShare, startsWithArabic } from '@/lib/arabic';
+import { arabicShare } from '@/lib/arabic';
 import { DIR_ATTR } from '@/lib/css';
 
 /**
@@ -38,6 +38,8 @@ const FONT_FIELD_TYPES = new Set([
 const MAX_HOPS = 5;
 /** How many items decide whether a list is an Arabic list. */
 const LIST_SAMPLE = 30;
+/** How much of a list item's text is read to judge its language. */
+const ITEM_SAMPLE = 100;
 /** How much of a block's text is read to judge its language. */
 const BLOCK_SAMPLE = 600;
 /** A block is only re-aligned when at least this share of its letters is Arabic. */
@@ -49,6 +51,28 @@ const FLOW_DISPLAYS = new Set(['block', 'inline-block', 'flow-root', 'table-cell
 const BLOCK_CHILDREN =
   'address,article,aside,blockquote,details,dialog,dd,div,dl,dt,fieldset,figure,footer,form,' +
   'h1,h2,h3,h4,h5,h6,header,hr,li,main,nav,ol,p,pre,section,table,ul';
+
+/** Elements whose text is not prose: never shown, or code. It says nothing about a block's language. */
+const NOT_PROSE = new Set(['script', 'style', 'noscript', 'template', 'pre', 'code', 'kbd', 'samp']);
+
+/**
+ * The first `limit` characters of the prose inside `el`. Unlike `textContent` it
+ * leaves out scripts, styles and code, and stops reading once it has enough.
+ */
+export function sampleText(el: Element, limit: number): string {
+  let out = '';
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      node.nodeType === Node.ELEMENT_NODE && NOT_PROSE.has((node as Element).localName)
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT,
+  });
+  let node: Node | null;
+  while (out.length < limit && (node = walker.nextNode())) {
+    if (node.nodeType === Node.TEXT_NODE) out += (node as Text).data;
+  }
+  return out.slice(0, limit);
+}
 
 /** Text fields whose direction should follow what is typed. */
 export function isTextField(el: Element): boolean {
@@ -109,7 +133,7 @@ export function planDirection(
 
   // An Arabic word inside an English paragraph, or one Arabic link in a row of links,
   // must not flip the whole block: it has to be mainly Arabic.
-  if (arabicShare((block.textContent ?? '').slice(0, BLOCK_SAMPLE)) < ARABIC_MAJORITY) return null;
+  if (arabicShare(sampleText(block, BLOCK_SAMPLE)) < ARABIC_MAJORITY) return null;
 
   // Centered or otherwise deliberately aligned text keeps its alignment.
   const aligned = cs.textAlign !== 'start' && cs.textAlign !== 'left';
@@ -117,7 +141,15 @@ export function planDirection(
   // dir="auto" asks the browser to guess from the first letter alone. A mainly Arabic
   // text that opens with a Latin word ("Claude …") is guessed left-to-right, which
   // scrambles every line. Here the guess is known to be wrong, so it is overridden.
-  if (dir === 'auto' || inlineAuto) {
+  // A block that carries dir="auto" itself was already going to be flipped as a whole
+  // by the browser whenever its text opened with Arabic, so flipping it is what the
+  // site asked for, whatever it lays out.
+  if (dir === 'auto') return { target: block, value: aligned ? 'rtl-bidi' : 'rtl' };
+  // The block of an inline dir="auto" wrapper made no such choice: it is only flipped
+  // along with the wrapper when that reorders nothing but text.
+  const flows = FLOW_DISPLAYS.has(cs.display) && !block.querySelector(BLOCK_CHILDREN);
+  if (inlineAuto) {
+    if (!flows) return { target: inlineAuto, value: 'rtl-bidi' };
     return { target: block, value: aligned ? 'rtl-bidi' : 'rtl', also: inlineAuto };
   }
   if (aligned) return { target: block, value: 'bidi' };
@@ -133,17 +165,16 @@ export function planDirection(
 
   // A block of running text that is mainly Arabic is right-to-left as a whole, so lines
   // that happen to start with a Latin word or a symbol are not laid out backwards.
-  if (FLOW_DISPLAYS.has(cs.display) && !block.querySelector(BLOCK_CHILDREN)) {
-    return { target: block, value: 'rtl' };
-  }
+  if (flows) return { target: block, value: 'rtl' };
   // A container of other blocks: direction would be inherited by all of them, so only
   // its own paragraphs are fixed, each by its first letter.
   return { target: block, value: 'auto' };
 }
 
 /**
- * A list is flipped as a whole (so its bullets move) when most of its items read
- * right-to-left. Evaluated fresh every time: lists grow while a page loads.
+ * A list is flipped as a whole (so its bullets move) when most of its items are
+ * mainly Arabic — including ones that open with a Latin name ("iPhone …").
+ * Evaluated fresh every time: lists grow while a page loads.
  */
 export function isArabicList(list: Element): boolean {
   let items = 0;
@@ -151,7 +182,7 @@ export function isArabicList(list: Element): boolean {
   for (const child of list.children) {
     if (child.localName !== 'li') continue;
     if (++items > LIST_SAMPLE) break;
-    if (startsWithArabic((child.textContent ?? '').slice(0, 100))) arabic++;
+    if (arabicShare(sampleText(child, ITEM_SAMPLE)) >= ARABIC_MAJORITY) arabic++;
   }
   return items > 0 && arabic * 2 >= items;
 }

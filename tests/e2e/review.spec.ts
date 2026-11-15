@@ -92,6 +92,8 @@ test('an element whose Arabic text is replaced with English loses Khatt’s mark
   await expect(page.locator('#reused')).not.toHaveAttribute('data-khatt-justify', /.*/);
   expect(await style('#reused', 'font-family')).toBe('Georgia, serif');
   expect(await style('#reused', 'text-align')).toBe('start');
+  // "start" alone would also be true of a block still forced right-to-left.
+  expect(await style('#reused', 'direction')).toBe('ltr');
 
   // And it is picked up again if Arabic comes back.
   await page.locator('#reused').evaluate((el) => {

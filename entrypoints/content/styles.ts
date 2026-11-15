@@ -52,6 +52,11 @@ export class StyleManager {
     return this.styleEl?.isConnected === true;
   }
 
+  /** True for Khatt's own stylesheets, as opposed to the page's. */
+  owns(sheet: CSSStyleSheet): boolean {
+    return sheet === this.shadowSheet || (this.styleEl !== null && sheet.ownerNode === this.styleEl);
+  }
+
   /**
    * Switches all of Khatt's rules off or on, in the document and in shadow roots.
    * Used to read what the page's own styles say about an element.

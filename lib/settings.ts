@@ -43,11 +43,13 @@ export const DEFAULT_SETTINGS: Settings = {
   justify: false,
 };
 
-export const SIZE_MIN = 50;
-export const SIZE_MAX = 200;
-export const LINE_HEIGHT_MIN = 1.2;
-export const LINE_HEIGHT_MAX = 3;
-export const WORD_SPACING_MAX = 0.5;
+// The ranges the popup's sliders offer (it reads them from here), so a stored value
+// can always be shown as it is applied.
+export const SIZE_MIN = 80;
+export const SIZE_MAX = 140;
+export const LINE_HEIGHT_MIN = 1.4;
+export const LINE_HEIGHT_MAX = 2.4;
+export const WORD_SPACING_MAX = 0.3;
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -65,6 +67,37 @@ function defined<T extends object>(obj: T | undefined | null): Partial<T> {
     if (v !== undefined && v !== null) (out as Record<string, unknown>)[k] = v;
   }
   return out;
+}
+
+const NUMBER_RANGES = {
+  sizeAdjust: [SIZE_MIN, SIZE_MAX],
+  lineHeight: [LINE_HEIGHT_MIN, LINE_HEIGHT_MAX],
+  wordSpacing: [0, WORD_SPACING_MAX],
+} as const;
+
+/**
+ * One setting as it may be stored: numbers brought into range, choices checked.
+ * Returns undefined for a value that cannot be used at all.
+ */
+export function normalizeSetting(key: keyof Settings, value: unknown): unknown {
+  switch (key) {
+    case 'sizeAdjust':
+    case 'lineHeight':
+    case 'wordSpacing': {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+      // 0 (or less) switches the line-height minimum off.
+      if (key === 'lineHeight' && value <= 0) return 0;
+      const [min, max] = NUMBER_RANGES[key];
+      return clamp(value, min, max);
+    }
+    case 'numerals':
+      return NUMERAL_MODES.includes(value as Numerals) ? value : undefined;
+    case 'fontId':
+    case 'headingFontId':
+      return typeof value === 'string' && value.length <= 100 ? value : undefined;
+    default:
+      return typeof value === 'boolean' ? value : undefined;
+  }
 }
 
 /** Effective settings = defaults ← global ← site overrides. */

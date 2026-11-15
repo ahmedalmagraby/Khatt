@@ -20,6 +20,7 @@ import {
   checkFontCard,
   fontChoices,
   injectPreviewFaces,
+  isFontInstalled,
   localize,
   renderFontCards,
   t,
@@ -49,6 +50,10 @@ let global: Partial<Settings> = {};
 let systemFont = '';
 let sites: { hostname: string; config: SiteConfig }[] = [];
 let renderedChoices = '';
+/** Installed font families, once the user has asked for them to be listed. */
+let families: string[] = [];
+/** The suggestion the arrow keys are on; -1 = none. */
+let activeOption = -1;
 
 function status(el: HTMLElement, message: string, error = false): void {
   el.textContent = message;
@@ -160,11 +165,81 @@ function confirmImport(): Promise<boolean> {
 
 const save = (patch: Partial<Settings>) => commit(() => updateGlobal(patch));
 
+/** The suggestions currently shown under the font-name field. */
+const suggestions = () => [...installedFonts.querySelectorAll<HTMLElement>('[role="option"]')];
+
+function closeSuggestions(): void {
+  installedFonts.hidden = true;
+  activeOption = -1;
+  systemInput.setAttribute('aria-expanded', 'false');
+  systemInput.removeAttribute('aria-activedescendant');
+}
+
+/** Shows the installed fonts whose name contains what is typed, each with a sample in that font. */
+function showSuggestions(): void {
+  const query = systemInput.value.trim().toLowerCase();
+  const matches = query ? families.filter((f) => f.toLowerCase().includes(query)) : families;
+  // Nothing to offer, or the one match is already what is typed.
+  if (matches.length === 0 || (matches.length === 1 && matches[0]!.toLowerCase() === query)) {
+    closeSuggestions();
+    return;
+  }
+  installedFonts.replaceChildren(
+    ...matches.map((family, i) => {
+      const option = document.createElement('li');
+      option.id = `installed-font-${i}`;
+      option.setAttribute('role', 'option');
+      option.setAttribute('aria-selected', 'false');
+      option.dataset.family = family;
+
+      const name = document.createElement('span');
+      name.className = 'option-name';
+      name.textContent = family;
+
+      const sample = document.createElement('span');
+      sample.className = 'option-sample';
+      sample.lang = 'ar';
+      sample.dir = 'rtl';
+      sample.setAttribute('aria-hidden', 'true');
+      sample.textContent = t('sampleText');
+      sample.style.fontFamily = `"${cleanFontName(family)}", sans-serif`;
+
+      option.append(name, sample);
+      return option;
+    }),
+  );
+  installedFonts.hidden = false;
+  installedFonts.scrollTop = 0;
+  activeOption = -1;
+  systemInput.setAttribute('aria-expanded', 'true');
+  systemInput.removeAttribute('aria-activedescendant');
+}
+
+function moveActiveOption(step: number): void {
+  const options = suggestions();
+  if (options.length === 0) return;
+  options[activeOption]?.setAttribute('aria-selected', 'false');
+  activeOption = (activeOption + step + options.length) % options.length;
+  const option = options[activeOption]!;
+  option.setAttribute('aria-selected', 'true');
+  option.scrollIntoView({ block: 'nearest' });
+  systemInput.setAttribute('aria-activedescendant', option.id);
+}
+
+function chooseSuggestion(option: HTMLElement): void {
+  systemInput.value = option.dataset.family ?? '';
+  showSystemSample(systemInput.value);
+  closeSuggestions();
+}
+
 async function listInstalledFonts(): Promise<void> {
   try {
     const fonts = (await window.queryLocalFonts?.()) ?? [];
-    const families = [...new Set(fonts.map((f) => f.family))].sort((a, b) => a.localeCompare(b));
-    installedFonts.replaceChildren(...families.map((family) => new Option(family, family)));
+    families = [...new Set(fonts.map((f) => f.family))].sort((a, b) => a.localeCompare(b));
+    if (families.length) {
+      systemInput.focus();
+      showSuggestions();
+    }
     status(
       systemStatus,
       families.length ? t('systemFontLoaded', String(families.length)) : t('systemFontDenied'),
@@ -216,7 +291,34 @@ async function importSettings(file: File): Promise<void> {
 function bind(): void {
   headingFont.addEventListener('change', () => void save({ headingFontId: headingFont.value }));
 
-  systemInput.addEventListener('input', () => showSystemSample(systemInput.value));
+  systemInput.addEventListener('input', () => {
+    showSystemSample(systemInput.value);
+    showSuggestions();
+  });
+  systemInput.addEventListener('click', showSuggestions);
+  systemInput.addEventListener('blur', closeSuggestions);
+  systemInput.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (families.length === 0) return;
+      event.preventDefault();
+      if (installedFonts.hidden) showSuggestions();
+      else moveActiveOption(event.key === 'ArrowDown' ? 1 : -1);
+    } else if (event.key === 'Escape' && !installedFonts.hidden) {
+      event.preventDefault();
+      closeSuggestions();
+    } else if (event.key === 'Enter' && activeOption >= 0) {
+      // Enter on a highlighted suggestion picks it; otherwise it applies the font (the form submits).
+      event.preventDefault();
+      const option = suggestions()[activeOption];
+      if (option) chooseSuggestion(option);
+    }
+  });
+  // mousedown would move focus out of the field and close the list before the click lands.
+  installedFonts.addEventListener('mousedown', (event) => event.preventDefault());
+  installedFonts.addEventListener('click', (event) => {
+    const option = (event.target as Element).closest<HTMLElement>('[role="option"]');
+    if (option) chooseSuggestion(option);
+  });
 
   // A form, so pressing Enter in the field applies the font too.
   $('system-form').addEventListener('submit', (event) => {
@@ -226,7 +328,9 @@ function bind(): void {
       status(systemStatus, t('systemFontEmpty'), true);
       return;
     }
-    status(systemStatus, '');
+    // Still applied (the check can be wrong), but an unknown name would silently change nothing.
+    if (isFontInstalled(name)) status(systemStatus, '');
+    else status(systemStatus, t('systemFontMissing', name), true);
     void commit(async () => {
       await setSystemFont(name);
       await updateGlobal({ fontId: SYSTEM_FONT_ID });

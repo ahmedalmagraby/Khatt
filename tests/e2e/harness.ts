@@ -80,6 +80,7 @@ const LATE_CSS_PAGE =
   '<p id="late" class="late">فقرة عربية تصل ورقة أنماطها متأخرة بعد أن عرضت الصفحة ووسمت عناصرها.</p>' +
   '<p id="late-center" class="center">فقرة في الوسط.</p>' +
   '<p id="late-rtl" class="rtl">فقرة يجعلها الموقع من اليمين.</p>' +
+  '<input id="late-field" class="rtl" type="text"><input id="late-plain-field" type="text">' +
   '<link rel="stylesheet" href="/slow.css"></body></html>';
 
 const DESIGN_PAGE =
@@ -129,6 +130,7 @@ export async function launch(): Promise<Harness> {
       '/extras': 'extras.html',
       '/hard': 'hard.html',
       '/review': 'review.html',
+      '/review2': 'review2.html',
       '/dirauto': 'dirauto.html',
     };
     const name = pages[url.pathname] ?? 'basic.html';

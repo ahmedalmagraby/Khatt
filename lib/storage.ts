@@ -30,7 +30,7 @@ export async function loadRaw(hostname: string | null): Promise<RawSettings> {
   };
 }
 
-export async function loadSettings(hostname: string): Promise<Settings> {
+export async function loadSettings(hostname: string | null): Promise<Settings> {
   const raw = await loadRaw(hostname);
   return resolveSettings(raw.global, raw.site);
 }
@@ -47,9 +47,23 @@ export async function setSystemFont(name: string): Promise<void> {
   else await browser.storage.local.remove(SYSTEM_FONT_KEY);
 }
 
-export async function updateGlobal(patch: Partial<Settings>): Promise<void> {
-  const { global } = await loadRaw(null);
-  await browser.storage.sync.set({ [GLOBAL_KEY]: { ...global, ...patch } });
+/**
+ * Every change below reads the stored value, alters it and writes it back. They run
+ * one at a time, so two changes made together (a switch toggled while a slider is
+ * still being saved) cannot both start from the same value and undo each other.
+ */
+let writes: Promise<unknown> = Promise.resolve();
+function inTurn(write: () => Promise<void>): Promise<void> {
+  const next = writes.then(write, write);
+  writes = next.catch(() => {});
+  return next;
+}
+
+export function updateGlobal(patch: Partial<Settings>): Promise<void> {
+  return inTurn(async () => {
+    const { global } = await loadRaw(null);
+    await browser.storage.sync.set({ [GLOBAL_KEY]: { ...global, ...patch } });
+  });
 }
 
 async function saveSite(hostname: string, site: SiteConfig): Promise<void> {
@@ -57,38 +71,40 @@ async function saveSite(hostname: string, site: SiteConfig): Promise<void> {
   else await browser.storage.sync.set({ [siteKey(hostname)]: site });
 }
 
-export async function setSiteEnabled(hostname: string, enabled: boolean): Promise<void> {
-  const { site } = await loadRaw(hostname);
-  await saveSite(hostname, withSiteEnabled(site, enabled));
+export function setSiteEnabled(hostname: string, enabled: boolean): Promise<void> {
+  return inTurn(async () => {
+    const { site } = await loadRaw(hostname);
+    await saveSite(hostname, withSiteEnabled(site, enabled));
+  });
 }
 
-export async function updateSiteOverrides(
-  hostname: string,
-  patch: Partial<Settings>,
-): Promise<void> {
-  const { site } = await loadRaw(hostname);
-  await saveSite(hostname, withSiteOverrides(site, patch));
+export function updateSiteOverrides(hostname: string, patch: Partial<Settings>): Promise<void> {
+  return inTurn(async () => {
+    const { site } = await loadRaw(hostname);
+    await saveSite(hostname, withSiteOverrides(site, patch));
+  });
 }
 
-export async function clearSiteOverrides(hostname: string): Promise<void> {
-  const { site } = await loadRaw(hostname);
-  await saveSite(hostname, withoutSiteOverrides(site));
+export function clearSiteOverrides(hostname: string): Promise<void> {
+  return inTurn(async () => {
+    const { site } = await loadRaw(hostname);
+    await saveSite(hostname, withoutSiteOverrides(site));
+  });
 }
 
 /** Drops individual overrides of a site, leaving its other settings as they are. */
-export async function removeSiteOverrideKeys(
-  hostname: string,
-  keys: (keyof Settings)[],
-): Promise<void> {
-  const { site } = await loadRaw(hostname);
-  const overrides = { ...site.overrides };
-  for (const key of keys) delete overrides[key];
-  await saveSite(hostname, { ...site, overrides });
+export function removeSiteOverrideKeys(hostname: string, keys: (keyof Settings)[]): Promise<void> {
+  return inTurn(async () => {
+    const { site } = await loadRaw(hostname);
+    const overrides = { ...site.overrides };
+    for (const key of keys) delete overrides[key];
+    await saveSite(hostname, { ...site, overrides });
+  });
 }
 
 /** Forgets everything stored for a site, returning it to the global settings. */
-export async function removeSite(hostname: string): Promise<void> {
-  await browser.storage.sync.remove(siteKey(hostname));
+export function removeSite(hostname: string): Promise<void> {
+  return inTurn(() => browser.storage.sync.remove(siteKey(hostname)));
 }
 
 /** Every site that has something stored, sorted by hostname. */

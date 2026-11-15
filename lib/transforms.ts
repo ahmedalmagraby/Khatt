@@ -19,7 +19,8 @@ const WESTERN_DIGIT_RE = /[0-9]/g;
 const ARABIC_INDIC_DIGIT_RE = /[٠-٩]/g;
 const PERSIAN_DIGIT_RE = /[۰-۹]/g;
 const TOKEN_RE = /\S+/g;
-const LATIN_LETTER_RE = /[A-Za-z]/;
+const LATIN_LETTER_RE = /\p{Script=Latin}/u;
+const BARE_NUMBER_RE = /^\p{Nd}+$/u;
 const ANY_DIGIT_RE = /\p{Nd}/u;
 const ANY_LETTER_RE = /\p{L}/u;
 
@@ -38,12 +39,17 @@ export function toArabicIndicDigits(text: string): string {
 /**
  * Like toArabicIndicDigits, but leaves technical tokens alone: any run of
  * non-space characters that contains a Latin letter (version numbers, URLs,
- * product codes, e-mail addresses) keeps its digits.
+ * product codes, e-mail addresses) keeps its digits. So does a bare number right
+ * after such a token, which is nearly always part of a name ("Windows 11", "iPhone 16").
  */
 export function toArabicIndicDigitsInProse(text: string): string {
-  return text.replace(TOKEN_RE, (token) =>
-    LATIN_LETTER_RE.test(token) ? token : toArabicIndicDigits(token),
-  );
+  let afterLatin = false;
+  return text.replace(TOKEN_RE, (token) => {
+    const latin = LATIN_LETTER_RE.test(token);
+    const keep = latin || (afterLatin && BARE_NUMBER_RE.test(token));
+    afterLatin = latin;
+    return keep ? token : toArabicIndicDigits(token);
+  });
 }
 
 export function toWesternDigits(text: string): string {

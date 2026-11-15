@@ -37,6 +37,22 @@ export function injectPreviewFaces(): void {
   document.head.append(style);
 }
 
+/**
+ * Whether a font family of this name is installed. A missing family falls back to
+ * the generic one, so text measures the same with and without it; two different
+ * generics rule out a font that happens to match one of them.
+ */
+export function isFontInstalled(name: string): boolean {
+  const clean = cleanFontName(name);
+  const context = document.createElement('canvas').getContext('2d');
+  if (!clean || !context) return true;
+  const width = (family: string) => {
+    context.font = `72px ${family}`;
+    return context.measureText('أبجد هوز mmwwli 0123').width;
+  };
+  return ['monospace', 'serif'].some((generic) => width(`"${clean}", ${generic}`) !== width(generic));
+}
+
 export interface FontChoice {
   id: string;
   label: string;
@@ -79,6 +95,8 @@ export function renderFontCards(
       const sample = document.createElement('span');
       sample.className = 'sample';
       sample.lang = 'ar';
+      // Shown for its looks: the card is named by the font's name alone.
+      sample.setAttribute('aria-hidden', 'true');
       sample.textContent = sampleText;
       sample.style.fontFamily = choice.family;
 

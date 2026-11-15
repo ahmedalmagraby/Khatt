@@ -50,15 +50,41 @@ export class TextTransformer {
     if (this.active && this.rewritable(parent)) this.rewrite(text);
   }
 
+  /**
+   * A text node without Arabic that appeared or changed. If it is a bare number and
+   * the nearest element around it that rewrites text is a tagged one, it follows the
+   * numeral setting like the numbers that were there when that element was tagged.
+   */
+  applyToNumber(text: Text): void {
+    if (this.options.numerals === 'off' || !isNumericOnly(text.data)) return;
+    for (let el = text.parentElement; el; el = el.parentElement) {
+      if (!this.rewritable(el)) return;
+      if (this.isTagged(el)) {
+        this.rewrite(text);
+        return;
+      }
+    }
+  }
+
   /** True when `text` currently holds exactly what we wrote into it. */
   isOwnWrite(text: Text): boolean {
     return this.written.get(text) === text.data;
   }
 
-  /** Puts back the original text of the nodes directly inside `el`. */
+  /** Puts back the original text of the nodes directly inside `el`, and of the bare numbers nested in it. */
   restoreIn(el: Element): void {
     for (const child of el.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) this.restore(child as Text);
+    }
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      const original = this.originals.get(node as Text);
+      // Only numbers rewritten on behalf of `el`; Arabic text deeper down belongs to
+      // tagged elements of its own.
+      if (original !== undefined && node.parentNode !== el && isNumericOnly(original)) {
+        this.restore(node as Text);
+      }
     }
   }
 

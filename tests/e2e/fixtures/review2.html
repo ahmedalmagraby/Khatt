@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — second review</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 520px; margin: 20px; }
+      .tracked { letter-spacing: 2px; }
+      .bar { display: flex; gap: 8px; }
+    </style>
+  </head>
+  <body>
+    <!-- Text that will be replaced with English in place. -->
+    <p id="reused">هذا نص عربي سيستبدل بنص إنجليزي لاحقا في العنصر نفسه.</p>
+
+    <!-- Controls without Arabic keep their site's tracking; ones with Arabic lose it. -->
+    <input id="en-submit" class="tracked" type="submit" value="SIGN IN" />
+    <input id="ar-submit" class="tracked" type="submit" value="تسجيل الدخول" />
+    <input id="en-text" class="tracked" type="text" />
+    <select id="en-select" class="tracked"><option>English</option></select>
+
+    <!-- An option without a value attribute submits its text. -->
+    <select id="ar-select"><option id="ar-option">العَرَبِيَّة 2024</option><option>English</option></select>
+    <datalist id="list"><option id="list-option">العَرَبِيَّة 2024</option></datalist>
+
+    <!-- Numbers in their own element. -->
+    <p id="split">عام <b id="year">2024</b> شهد أحداثا كثيرة</p>
+    <p id="split-reused">عام <b id="year-reused">2024</b> شهد أحداثا كثيرة</p>
+
+    <!-- Elements whose Arabic goes away without a new text node taking its place. -->
+    <p id="emptied">فقرة عربية سيفرغها الموقع من نصها.</p>
+    <p id="swapped">فقرة عربية سيستبدل الموقع نصها بعناصر أخرى.</p>
+    <p id="inner-gone"><span id="inner-span">نص عربي داخل عنصر سيزال من الفقرة.</span></p>
+
+    <!-- A paragraph that gets a text field after it was made right-to-left. -->
+    <p id="reply">اكتب ردك هنا في هذا الحقل الذي يضاف لاحقا: </p>
+
+    <!-- A list of Arabic items that open with Latin names. -->
+    <ul id="brands">
+      <li>iPhone هاتف ذكي تنتجه شركة معروفة</li>
+      <li>Windows نظام تشغيل واسع الانتشار</li>
+      <li>Chrome متصفح سريع وخفيف</li>
+    </ul>
+
+    <!-- Style inside a block says nothing about its language. -->
+    <p id="with-style"><style>.unused-rule-with-many-latin-letters { color: red; background: blue; border: 1px solid green; }</style>نص عربي قصير</p>
+
+    <!-- An inline dir="auto" wrapper in a block that lays out other things. -->
+    <div id="bar" class="bar"><span id="bar-icon">★</span><span id="bar-text">نص عربي</span></div>
+    <div id="mixed"><span id="mixed-auto" dir="auto">Claude غيّر طريقة العمل كلها وصار الشغل ممتعا جدا، وهذا نص عربي طويل يجعل الحاوية عربية في معظمها.</span>
+      <p id="mixed-en">An English paragraph.</p>
+    </div>
+
+    <!-- A sandboxed frame has no host of its own and cannot reach the top page. -->
+    <iframe id="sandboxed" sandbox="allow-scripts" srcdoc="&lt;p id='framed'&gt;نص عربي داخل إطار معزول.&lt;/p&gt;"></iframe>
+  </body>
+</html>

@@ -1,6 +1,15 @@
 import { defineConfig } from 'wxt';
 
+const ACTION_TITLE = '__MSG_actionTitle__';
+
 export default defineConfig({
+  hooks: {
+    // WXT fills the action title from the popup page's <title>, which cannot be
+    // localised; put the message reference back so the tooltip follows the UI language.
+    'build:manifestGenerated': (_wxt, manifest) => {
+      if (manifest.action) manifest.action.default_title = ACTION_TITLE;
+    },
+  },
   manifest: {
     name: '__MSG_extName__',
     description: '__MSG_extDescription__',
@@ -10,7 +19,7 @@ export default defineConfig({
     permissions: ['storage', 'scripting'],
     host_permissions: ['<all_urls>'],
     action: {
-      default_title: '__MSG_actionTitle__',
+      default_title: ACTION_TITLE,
     },
     web_accessible_resources: [
       {
