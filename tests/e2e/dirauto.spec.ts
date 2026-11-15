@@ -90,6 +90,18 @@ test('handles dir="auto" on an inline wrapper together with its block', async ()
   expect((await gaps('#wrap')).rightWorst).toBeLessThan(2);
 });
 
+test('respects an explicit dir on an inline wrapper, so a chat bubble’s text stays clear of its time', async () => {
+  await expect(page.locator('#bubble-text')).toHaveAttribute('data-khatt', /\d+/);
+  expect(await mark('#bubble-line')).toBeNull();
+  expect(await style('#bubble-line', 'direction')).toBe('ltr');
+  // The spacer stays after the text, under the time, so the two do not overlap.
+  const { textRight, timeLeft } = await page.evaluate(() => ({
+    textRight: document.getElementById('bubble-text')!.getBoundingClientRect().right,
+    timeLeft: document.getElementById('bubble-time')!.getBoundingClientRect().left,
+  }));
+  expect(textRight).toBeLessThanOrEqual(timeLeft + 1);
+});
+
 test('keeps deliberate alignment while fixing direction', async () => {
   expect(await mark('#post-center')).toBe('rtl-bidi');
   expect(await style('#post-center', 'direction')).toBe('rtl');

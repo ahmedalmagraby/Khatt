@@ -116,7 +116,13 @@ export function planDirection(
   let cs = style;
   let inlineAuto: Element | undefined;
   for (let hops = 0; cs.display === 'inline' || cs.display === 'contents'; hops++) {
-    if (!inlineAuto && dirOf(block) === 'auto') inlineAuto = block;
+    const inlineDir = dirOf(block);
+    if (inlineDir === 'auto') inlineAuto ??= block;
+    // An explicit dir on an inline wrapper is the site handling direction itself, and
+    // its block is laid out around that: WhatsApp follows the message text with an
+    // invisible spacer that keeps it clear of the time, and flipping the block would
+    // move the spacer to the wrong side.
+    else if (inlineDir !== null) return null;
     const parent = block.parentElement;
     if (!parent || hops >= MAX_HOPS) return null;
     block = parent;

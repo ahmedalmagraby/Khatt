@@ -39,6 +39,14 @@
     <!-- dir="auto" on an inline wrapper inside a plain block. -->
     <p id="wrap"><span id="inline-auto" dir="auto">Claude غيّر طريقة العمل كلها وصار الشغل ممتعا جدا.</span></p>
 
+    <!-- A chat bubble as WhatsApp Web builds it: the text sits in an inline wrapper with
+         an explicit dir, followed by an invisible spacer that keeps the last line clear
+         of the time, which is pulled up over the spacer. -->
+    <div id="bubble" style="width: max-content; max-width: 300px">
+      <div id="bubble-line" style="position: relative"><span dir="rtl"><span id="bubble-text">لا الصراحة</span></span><span><span id="bubble-spacer" style="display: inline-flex; visibility: hidden; width: 74px; height: 1em"></span></span></div>
+      <div id="bubble-time" style="position: relative; float: right; margin-top: -1.2em; width: 70px; font-size: 11px">2:18 PM</div>
+    </div>
+
     <!-- Centered dir="auto" text keeps its alignment. -->
     <div class="view" style="text-align: center">
       <div id="post-center" class="text" dir="auto"><span>Khatt خط جميل لقراءة النصوص العربية.</span></div>
