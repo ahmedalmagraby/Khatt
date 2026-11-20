@@ -41,10 +41,32 @@ export async function loadSystemFont(): Promise<string> {
   return typeof name === 'string' ? name : '';
 }
 
-export async function setSystemFont(name: string): Promise<void> {
+/** storage.local: whether the installed font has a bold face; absent when not known. */
+export const SYSTEM_FONT_BOLD_KEY = 'systemFontBold';
+
+/** The installed font, and whether it has a bold face (undefined: not known). */
+export async function loadSystemFontInfo(): Promise<{ name: string; bold?: boolean }> {
+  const data = await browser.storage.local.get([SYSTEM_FONT_KEY, SYSTEM_FONT_BOLD_KEY]);
+  const name = data[SYSTEM_FONT_KEY];
+  const bold = data[SYSTEM_FONT_BOLD_KEY];
+  return {
+    name: typeof name === 'string' ? name : '',
+    ...(typeof bold === 'boolean' ? { bold } : {}),
+  };
+}
+
+/** Stores the installed font's name and whether it has a bold face, in one write. */
+export async function setSystemFont(name: string, bold?: boolean): Promise<void> {
   const clean = name.trim();
-  if (clean) await browser.storage.local.set({ [SYSTEM_FONT_KEY]: clean });
-  else await browser.storage.local.remove(SYSTEM_FONT_KEY);
+  if (!clean) {
+    await browser.storage.local.remove([SYSTEM_FONT_KEY, SYSTEM_FONT_BOLD_KEY]);
+    return;
+  }
+  if (bold === undefined) await browser.storage.local.remove(SYSTEM_FONT_BOLD_KEY);
+  await browser.storage.local.set({
+    [SYSTEM_FONT_KEY]: clean,
+    ...(bold === undefined ? {} : { [SYSTEM_FONT_BOLD_KEY]: bold }),
+  });
 }
 
 /**
@@ -124,10 +146,35 @@ export async function loadEverything(): Promise<Record<string, unknown>> {
   return browser.storage.sync.get(null);
 }
 
-/** Replaces all synced settings (import). */
-export async function replaceEverything(data: Record<string, unknown>): Promise<void> {
-  await browser.storage.sync.clear();
-  await browser.storage.sync.set(data);
+/**
+ * Replaces all synced settings (import). The new values are written first and only
+ * then are the keys they leave out removed, so pages never see storage empty. If the
+ * write is refused (sync quotas), what was stored before is put back: nothing changes.
+ */
+export function replaceEverything(data: Record<string, unknown>): Promise<void> {
+  return inTurn(async () => {
+    const previous = await browser.storage.sync.get(null);
+    try {
+      await browser.storage.sync.set(data);
+      const stale = Object.keys(previous).filter((key) => !(key in data));
+      if (stale.length) await browser.storage.sync.remove(stale);
+    } catch (err) {
+      // Old and new together may not fit where the new alone would: try that before giving up.
+      try {
+        await browser.storage.sync.clear();
+        await browser.storage.sync.set(data);
+        return;
+      } catch {
+        try {
+          await browser.storage.sync.clear();
+          await browser.storage.sync.set(previous);
+        } catch (restoreErr) {
+          console.error('[Khatt] could not restore settings after a failed import', restoreErr);
+        }
+      }
+      throw err;
+    }
+  });
 }
 
 /**
@@ -138,7 +185,7 @@ export function watchStorage(hostname: string | null, onChange: () => void): () 
   const key = hostname === null || hostname === '*' ? null : siteKey(hostname);
   const listener = (changes: Record<string, unknown>, area: string) => {
     if (area === 'local') {
-      if (SYSTEM_FONT_KEY in changes) onChange();
+      if (SYSTEM_FONT_KEY in changes || SYSTEM_FONT_BOLD_KEY in changes) onChange();
       return;
     }
     if (area !== 'sync') return;

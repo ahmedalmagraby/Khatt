@@ -20,7 +20,8 @@ const ARABIC_INDIC_DIGIT_RE = /[٠-٩]/g;
 const PERSIAN_DIGIT_RE = /[۰-۹]/g;
 const TOKEN_RE = /\S+/g;
 const LATIN_LETTER_RE = /\p{Script=Latin}/u;
-const BARE_NUMBER_RE = /^\p{Nd}+$/u;
+/** A number on its own, possibly a version ("17.4", "3-1") and wrapped in punctuation ("(3.12)", "11."). */
+const BARE_NUMBER_RE = /^[(\[«"'“]*\p{Nd}+(?:[.,:\-/]\p{Nd}+)*[)\]»"'”.,:;!?،؛؟]*$/u;
 const ANY_DIGIT_RE = /\p{Nd}/u;
 const ANY_LETTER_RE = /\p{L}/u;
 

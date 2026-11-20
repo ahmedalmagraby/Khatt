@@ -11,7 +11,7 @@ import {
 } from '@/lib/css';
 import { PING_MESSAGE, TAKEOVER_EVENT } from '@/lib/messages';
 import type { Settings } from '@/lib/settings';
-import { loadSettings, loadSystemFont, watchStorage } from '@/lib/storage';
+import { loadSettings, loadSystemFontInfo, watchStorage } from '@/lib/storage';
 import { FontLoader } from './font-loader';
 import { Scanner } from './scanner';
 import { StyleManager } from './styles';
@@ -24,6 +24,11 @@ import { StyleManager } from './styles';
 function currentHost(): string | null {
   if (location.hostname) return location.hostname;
   if (location.protocol === 'file:') return '';
+  // blob: documents have no hostname of their own, but keep their creator's origin.
+  if (location.protocol === 'blob:' && location.origin !== 'null' && URL.canParse(location.origin)) {
+    const origin = new URL(location.origin);
+    if (origin.hostname) return origin.hostname;
+  }
   let top: URL | null = null;
   try {
     top = new URL(window.top!.location.href);
@@ -61,7 +66,7 @@ export default defineContentScript({
     /** Guards against an older read of the settings landing after a newer one. */
     let latestRefresh = 0;
 
-    const apply = (settings: Settings, systemFont: string) => {
+    const apply = (settings: Settings, systemFont: string, systemBold?: boolean) => {
       if (!settings.enabled) {
         scanner.stop();
         styles.destroy();
@@ -78,7 +83,7 @@ export default defineContentScript({
         // Installed fonts always load by name; bundled ones by URL, or from bytes on pages that block that.
         const bundled = fromBytes ? fontSpecsFor(fontId, systemFont, size, family) : null;
         if (bundled) specs.push(...bundled);
-        else css.push(fontCssFor(fontId, systemFont, size, fontUrl, family));
+        else css.push(fontCssFor(fontId, systemFont, size, fontUrl, family, systemBold));
       }
       styles.setFontCss(css.join('\n'));
       void fonts.use(specs);
@@ -97,9 +102,9 @@ export default defineContentScript({
     const refresh = async () => {
       const mine = ++latestRefresh;
       try {
-        const [settings, systemFont] = await Promise.all([loadSettings(host), loadSystemFont()]);
+        const [settings, system] = await Promise.all([loadSettings(host), loadSystemFontInfo()]);
         if (stopped || mine !== latestRefresh) return;
-        apply(settings, systemFont);
+        apply(settings, system.name, system.bold);
       } catch {
         // Extension context invalidated (reload/update) — nothing to do.
       }

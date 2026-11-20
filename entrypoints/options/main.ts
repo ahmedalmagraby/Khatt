@@ -1,5 +1,5 @@
 import { buildBackup, parseBackup } from '@/lib/backup';
-import { cleanFontName } from '@/lib/css';
+import { cleanFontName, systemBoldSources } from '@/lib/css';
 import { DEFAULT_FONT_ID, effectiveFontId, SYSTEM_FONT_ID } from '@/lib/fonts';
 import { hasOverrides, resolveSettings, type Settings, type SiteConfig } from '@/lib/settings';
 import {
@@ -232,6 +232,20 @@ function chooseSuggestion(option: HTMLElement): void {
   closeSuggestions();
 }
 
+/**
+ * Whether an installed font has a bold face. Without one, pages draw bold text in the
+ * regular face, emboldened. Undefined when it cannot be told here.
+ */
+async function hasBoldFace(name: string): Promise<boolean | undefined> {
+  if (typeof FontFace !== 'function') return undefined;
+  try {
+    await new FontFace('Khatt Bold Probe', systemBoldSources(name)).load();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function listInstalledFonts(): Promise<void> {
   try {
     const fonts = (await window.queryLocalFonts?.()) ?? [];
@@ -332,7 +346,7 @@ function bind(): void {
     if (isFontInstalled(name)) status(systemStatus, '');
     else status(systemStatus, t('systemFontMissing', name), true);
     void commit(async () => {
-      await setSystemFont(name);
+      await setSystemFont(name, await hasBoldFace(name));
       await updateGlobal({ fontId: SYSTEM_FONT_ID });
     });
   });

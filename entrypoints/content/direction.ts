@@ -1,4 +1,4 @@
-import { arabicShare } from '@/lib/arabic';
+import { arabicShare, startsWithArabic } from '@/lib/arabic';
 import { DIR_ATTR } from '@/lib/css';
 
 /**
@@ -111,6 +111,8 @@ export function planDirection(
   el: Element,
   style: CSSStyleDeclaration,
   ignoreMarks = false,
+  /** Verdicts of isArabicList already reached in this pass: a long list's items share one. */
+  lists?: Map<Element, boolean>,
 ): DirectionFix | null {
   let block = el;
   let cs = style;
@@ -139,7 +141,8 @@ export function planDirection(
 
   // An Arabic word inside an English paragraph, or one Arabic link in a row of links,
   // must not flip the whole block: it has to be mainly Arabic.
-  if (arabicShare(sampleText(block, BLOCK_SAMPLE)) < ARABIC_MAJORITY) return null;
+  const sample = sampleText(block, BLOCK_SAMPLE);
+  if (arabicShare(sample) < ARABIC_MAJORITY) return null;
 
   // Centered or otherwise deliberately aligned text keeps its alignment.
   const aligned = cs.textAlign !== 'start' && cs.textAlign !== 'left';
@@ -158,11 +161,18 @@ export function planDirection(
     if (!flows) return { target: inlineAuto, value: 'rtl-bidi' };
     return { target: block, value: aligned ? 'rtl-bidi' : 'rtl', also: inlineAuto };
   }
-  if (aligned) return { target: block, value: 'bidi' };
+  if (aligned) {
+    // plaintext takes the direction from the first letter. When that is Arabic it is
+    // right-to-left already; a mainly Arabic run of text that opens with a Latin word
+    // would be laid out left-to-right, so it is made right-to-left as a whole. Not for
+    // "end" alignment, which right-to-left would move to the other side.
+    const flip = flows && cs.textAlign !== 'end' && !startsWithArabic(sample);
+    return { target: block, value: flip ? 'rtl-bidi' : 'bidi' };
+  }
 
   if (cs.display === 'list-item') {
     const list = block.parentElement;
-    if (list && isList(list) && !list.hasAttribute('dir') && isArabicList(list)) {
+    if (list && isList(list) && !list.hasAttribute('dir') && arabicListCached(list, lists)) {
       return { target: list, value: 'rtl' };
     }
     // A lone Arabic item in another list: keep its bullet where the list puts it.
@@ -175,6 +185,15 @@ export function planDirection(
   // A container of other blocks: direction would be inherited by all of them, so only
   // its own paragraphs are fixed, each by its first letter.
   return { target: block, value: 'auto' };
+}
+
+function arabicListCached(list: Element, cache?: Map<Element, boolean>): boolean {
+  let verdict = cache?.get(list);
+  if (verdict === undefined) {
+    verdict = isArabicList(list);
+    cache?.set(list, verdict);
+  }
+  return verdict;
 }
 
 /**

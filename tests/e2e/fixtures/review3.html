@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Khatt fixture — third review</title>
+    <style>
+      body { font: 16px Georgia, serif; width: 520px; margin: 20px; }
+      .center { text-align: center; }
+    </style>
+  </head>
+  <body>
+    <!-- Two Arabic spans tagged in the same batch share one block. -->
+    <p id="pair"><span id="pair-a">مرحبا بكم جميعا في هذا الموقع</span> <span id="pair-b">نتمنى لكم وقتا طيبا هنا</span></p>
+
+    <!-- Centered, mainly Arabic, opening with a Latin word. -->
+    <h2 id="center-latin" class="center">Claude ميزة جديدة رائعة ومفيدة جدا للجميع</h2>
+    <!-- Centered and opening with Arabic: plaintext is right-to-left already. -->
+    <h2 id="center-arabic" class="center">ميزة جديدة من Claude</h2>
+
+    <!-- Becomes an editor later: its rewritten text must be put back first. -->
+    <div id="inline-edit"><p id="edit-p">كَتَبَ الطالبُ الدرسَ عام 2024 في المدرسة</p></div>
+
+    <!-- A still-tagged inner block owns the numbers inside it. -->
+    <div id="outer">مرحبا <p id="inner">أهلا وسهلا <b id="inner-year">2024</b></p></div>
+
+    <!-- Not an editor: an invalid contenteditable value inherits. -->
+    <p id="not-editor" contenteditable="inherit">نص عربي عام 2024</p>
+
+    <!-- Rewritten text moved to another block: that block is planned for it. -->
+    <p id="from"><span id="mover">كَتَبَ الطالبُ الدرسَ في المدرسة اليوم</span></p>
+    <p id="to"></p>
+
+    <!-- Targets of the strip tests. -->
+    <p id="hostile">نص يزيل الموقع وسمه فورا في كل مرة</p>
+    <p id="rerender">نص يعيد الموقع رسمه بين حين وآخر</p>
+  </body>
+</html>

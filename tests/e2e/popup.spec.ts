@@ -214,3 +214,27 @@ test('pages where Khatt cannot run show only global controls', async () => {
   await expect(popup.locator('input[name="scope"][value="site"]')).toBeDisabled();
   await expect(popup.locator('input[name="font"]')).toHaveCount(8);
 });
+
+test('a slider value still waiting to be saved is saved when the popup closes', async () => {
+  await popup.evaluate(() => {
+    const slider = document.getElementById('size') as HTMLInputElement;
+    slider.value = '125';
+    slider.dispatchEvent(new Event('input'));
+    // Closing at once: the popup's own debounced write never runs; the background saves it.
+    window.dispatchEvent(new PageTransitionEvent('pagehide'));
+  });
+  await expect.poll(async () => (await h.getStorage()).global).toMatchObject({ sizeAdjust: 125 });
+});
+
+test('the background only takes slider values from the save message, held to their range', async () => {
+  await popup.evaluate(() =>
+    (globalThis as unknown as { chrome: { runtime: { sendMessage(m: unknown): Promise<unknown> } } }).chrome.runtime.sendMessage({
+      type: 'khatt:save',
+      host: null,
+      patch: { enabled: false, sizeAdjust: 9999 },
+    }),
+  );
+  await expect.poll(async () => ((await h.getStorage()).global as { sizeAdjust?: number } | undefined)?.sizeAdjust).toBeGreaterThan(100);
+  expect(((await h.getStorage()).global as Record<string, unknown>).sizeAdjust).toBeLessThan(9999);
+  expect((await h.getStorage()).global).not.toHaveProperty('enabled');
+});

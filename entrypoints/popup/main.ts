@@ -1,6 +1,6 @@
 import { browser } from 'wxt/browser';
 import { effectiveFontId } from '@/lib/fonts';
-import { ENSURE_MESSAGE, type EnsureStatus } from '@/lib/messages';
+import { ENSURE_MESSAGE, SAVE_MESSAGE, type EnsureStatus } from '@/lib/messages';
 import { matchingPreset, PRESETS } from '@/lib/presets';
 import {
   hasOverrides,
@@ -298,7 +298,24 @@ function bind(): void {
     });
     slider.input.addEventListener('change', () => flush(slider));
   }
-  window.addEventListener('pagehide', () => sliders.forEach(flush));
+  // A closing popup is torn down before its own read-then-write could finish, so values
+  // still waiting are handed to the background to save.
+  window.addEventListener('pagehide', () => {
+    const patch: Partial<Settings> = {};
+    for (const slider of sliders) {
+      if (!slider.timer) continue;
+      clearTimeout(slider.timer);
+      slider.timer = undefined;
+      patch[slider.key] = slider.toSetting(Number(slider.input.value));
+    }
+    if (Object.keys(patch).length === 0) return;
+    const target = scope === 'site' ? host : null;
+    try {
+      void browser.runtime.sendMessage({ type: SAVE_MESSAGE, host: target, patch }).catch(() => {});
+    } catch {
+      // Extension context gone; nothing more can be done.
+    }
+  });
 }
 
 async function init(): Promise<void> {

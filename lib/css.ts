@@ -111,22 +111,44 @@ export function fontFaceCss(
 
 /** A font-family name made safe to place inside a quoted CSS string. */
 export function cleanFontName(name: string): string {
-  return name.replace(/["\\\n\r]/g, '').trim().slice(0, 100);
+  // \f is a CSS newline too: it would end the quoted string.
+  return name.replace(/["\\\n\r\f]/g, '').trim().slice(0, 100);
 }
 
-/** @font-face for a font installed on the user's computer, limited to Arabic like the bundled ones. */
+/**
+ * The local() sources of an installed font's bold face. local() matches a face's full
+ * name ("Family Bold") or its PostScript name ("Family-Bold", no spaces).
+ */
+export function systemBoldSources(name: string): string {
+  const clean = cleanFontName(name);
+  return `local("${clean} Bold"),local("${clean.replace(/\s+/g, '')}-Bold")`;
+}
+
+/**
+ * @font-face for a font installed on the user's computer, limited to Arabic like the
+ * bundled ones. `bold` says whether the font has a bold face (checked when it was
+ * chosen); undefined when that is not known.
+ */
 export function systemFontFaceCss(
   name: string,
   sizePercent: number,
   family: string = FAMILY,
+  bold?: boolean,
 ): string {
   const clean = cleanFontName(name);
   const tail = `font-style:normal;size-adjust:${Math.round(sizePercent)}%;unicode-range:${ARABIC_UNICODE_RANGE}}`;
-  // local() matches a face's full name, which for some fonts spells out "Regular".
-  return (
-    `@font-face{font-family:"${family}";src:local("${clean}"),local("${clean} Regular");font-weight:400;${tail}\n` +
-    `@font-face{font-family:"${family}";src:local("${clean} Bold"),local("${clean}");font-weight:700;${tail}`
-  );
+  // Some fonts spell out "Regular" in the full name of their regular face.
+  const regular =
+    `@font-face{font-family:"${family}";src:local("${clean}"),local("${clean} Regular"),` +
+    `local("${clean.replace(/\s+/g, '')}-Regular");font-weight:400;${tail}`;
+  // No bold face: no 700 rule, so bold text uses the regular face, emboldened by the
+  // browser. (A 700 rule whose sources are all missing would hand bold Arabic to the
+  // next font in the site's stack instead.)
+  if (bold === false) return regular;
+  // Known to have one: bold names only, so it is never the regular face drawn at 700.
+  // Not known: the regular face as a last resort, so bold text keeps the chosen font.
+  const fallback = bold ? '' : `,local("${clean}")`;
+  return `${regular}\n@font-face{font-family:"${family}";src:${systemBoldSources(clean)}${fallback};font-weight:700;${tail}`;
 }
 
 /** @font-face block for a font choice: a bundled font id, or the system font when its name is known. */
@@ -136,9 +158,10 @@ export function fontCssFor(
   sizePercent: number,
   urlFor: (file: string) => string,
   family: string = FAMILY,
+  systemBold?: boolean,
 ): string {
   if (fontId === SYSTEM_FONT_ID && cleanFontName(systemFont)) {
-    return systemFontFaceCss(systemFont, sizePercent, family);
+    return systemFontFaceCss(systemFont, sizePercent, family, systemBold);
   }
   return fontFaceCss(getFont(fontId), sizePercent, urlFor, family);
 }

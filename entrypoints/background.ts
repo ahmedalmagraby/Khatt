@@ -1,8 +1,23 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
 import { BUNDLED_FONTS } from '@/lib/fonts';
-import { ENSURE_MESSAGE, FONT_MESSAGE, PING_MESSAGE, type EnsureStatus } from '@/lib/messages';
-import { SETTINGS_VERSION, VERSION_KEY } from '@/lib/settings';
+import {
+  ENSURE_MESSAGE,
+  FONT_MESSAGE,
+  PING_MESSAGE,
+  SAVE_MESSAGE,
+  type EnsureStatus,
+} from '@/lib/messages';
+import { normalizeSetting, SETTINGS_VERSION, VERSION_KEY, type Settings } from '@/lib/settings';
+import { updateGlobal, updateSiteOverrides } from '@/lib/storage';
+
+/** Settings the popup may hand over for saving as it closes: its sliders. */
+const SAVE_KEYS: readonly (keyof Settings)[] = ['sizeAdjust', 'lineHeight', 'wordSpacing'];
+
+/** True for messages from the extension's own pages (popup, options), not content scripts in web pages. */
+function fromExtensionPage(sender: { url?: string }): boolean {
+  return typeof sender.url === 'string' && sender.url.startsWith(browser.runtime.getURL('/'));
+}
 
 const FONT_FILES = new Set(BUNDLED_FONTS.flatMap((font) => font.faces.map((face) => face.file)));
 
@@ -79,8 +94,14 @@ export default defineBackground(() => {
     }
   });
 
-  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    const request = message as { type?: unknown; file?: unknown; tabId?: unknown } | null;
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    const request = message as {
+      type?: unknown;
+      file?: unknown;
+      tabId?: unknown;
+      host?: unknown;
+      patch?: unknown;
+    } | null;
 
     // A page where the content script cannot read a bundled font asks for its bytes here.
     if (request?.type === FONT_MESSAGE) {
@@ -103,6 +124,7 @@ export default defineBackground(() => {
 
     // The popup makes sure the tab it was opened on is actually running Khatt.
     if (request?.type === ENSURE_MESSAGE && typeof request.tabId === 'number') {
+      if (!fromExtensionPage(sender)) return;
       const tabId = request.tabId;
       (async () => {
         try {
@@ -112,6 +134,20 @@ export default defineBackground(() => {
         }
       })();
       return true;
+    }
+
+    if (request?.type === SAVE_MESSAGE && fromExtensionPage(sender)) {
+      const host = request.host;
+      const raw = request.patch;
+      if ((host !== null && typeof host !== 'string') || typeof raw !== 'object' || raw === null) return;
+      const patch: Record<string, unknown> = {};
+      for (const key of SAVE_KEYS) {
+        const value = normalizeSetting(key, (raw as Record<string, unknown>)[key]);
+        if (value !== undefined) patch[key] = value;
+      }
+      if (Object.keys(patch).length === 0) return;
+      const save = host === null ? updateGlobal(patch) : updateSiteOverrides(host, patch);
+      save.catch((err) => console.error('[Khatt] could not save settings', err));
     }
   });
 });

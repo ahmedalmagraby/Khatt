@@ -131,6 +131,7 @@ export async function launch(): Promise<Harness> {
       '/hard': 'hard.html',
       '/review': 'review.html',
       '/review2': 'review2.html',
+      '/review3': 'review3.html',
       '/dirauto': 'dirauto.html',
     };
     const name = pages[url.pathname] ?? 'basic.html';

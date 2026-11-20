@@ -76,16 +76,22 @@ export class TextTransformer {
     for (const child of el.childNodes) {
       if (child.nodeType === Node.TEXT_NODE) this.restore(child as Text);
     }
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    // Only numbers rewritten on behalf of `el`: the same nodes rewriteNestedNumbers
+    // reaches. Text under tagged descendants belongs to those elements.
+    const walker = this.nestedWalker(el);
     let node: Node | null;
     while ((node = walker.nextNode())) {
+      if (node.nodeType !== Node.TEXT_NODE || node.parentNode === el) continue;
       const original = this.originals.get(node as Text);
-      // Only numbers rewritten on behalf of `el`; Arabic text deeper down belongs to
-      // tagged elements of its own.
-      if (original !== undefined && node.parentNode !== el && isNumericOnly(original)) {
-        this.restore(node as Text);
-      }
+      if (original !== undefined && isNumericOnly(original)) this.restore(node as Text);
     }
+  }
+
+  /** Puts back every rewritten node anywhere inside `el`, whoever rewrote it (it became an editor). */
+  restoreSubtree(el: Element): void {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node: Node | null;
+    while ((node = walker.nextNode())) this.restore(node as Text);
   }
 
   /** Puts back every rewritten node on the page. */
@@ -103,19 +109,23 @@ export class TextTransformer {
    * tagged. Such bare numbers follow the numeral setting of the text around them.
    */
   private rewriteNestedNumbers(el: Element): void {
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-      // Tagged descendants handle their own text; off-limits ones are left alone.
+    const walker = this.nestedWalker(el);
+    let node: Node | null;
+    while ((node = walker.nextNode())) {
+      if (node.nodeType !== Node.TEXT_NODE || node.parentNode === el) continue;
+      if (isNumericOnly((node as Text).data)) this.rewrite(node as Text);
+    }
+  }
+
+  /** Walks `el` without entering tagged descendants (they handle their own text) or off-limits ones. */
+  private nestedWalker(el: Element): TreeWalker {
+    return document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: (node) =>
         node.nodeType === Node.ELEMENT_NODE &&
         (this.offLimits(node as Element) || this.isTagged(node as Element))
           ? NodeFilter.FILTER_REJECT
           : NodeFilter.FILTER_ACCEPT,
     });
-    let node: Node | null;
-    while ((node = walker.nextNode())) {
-      if (node.nodeType !== Node.TEXT_NODE || node.parentNode === el) continue;
-      if (isNumericOnly((node as Text).data)) this.rewrite(node as Text);
-    }
   }
 
   private rewritable(el: Element): boolean {

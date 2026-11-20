@@ -9,7 +9,7 @@ import {
   PROSE_ATTR,
   stripOwnFamily,
 } from '@/lib/css';
-import type { TransformOptions } from '@/lib/transforms';
+import { isNumericOnly, type TransformOptions } from '@/lib/transforms';
 import {
   isArabicList,
   isFontField,
@@ -40,7 +40,10 @@ const SKIP_SELECTOR = 'script,style,noscript,template,pre,code,kbd,samp,datalist
  * model), so nothing inside is tagged or rewritten — only the editor element itself
  * gets the font, which its content inherits.
  */
-const EDITABLE_SELECTOR = '[contenteditable]:not([contenteditable="false" i])';
+const EDITABLE_SELECTOR =
+  '[contenteditable=""],[contenteditable="true" i],[contenteditable="plaintext-only" i]';
+/** contenteditable values that make an editor; any other value (a typo, "inherit") does not. */
+const EDITABLE_VALUES = new Set(['', 'true', 'plaintext-only']);
 /**
  * Editors, and the controls whose child nodes are a value rather than page text: an
  * <option>'s text is what the form submits, a <textarea>'s is its initial value.
@@ -69,14 +72,25 @@ const TAG_BATCH_MAX = 250;
 /** How many elements are re-checked at a time after the page's stylesheets change. */
 const REVALIDATE_CHUNK = 400;
 const REVALIDATE_DELAY_MS = 80;
+/**
+ * Pages that strip Khatt's tag get it back (DOM morphing libraries do this on every
+ * render). One that strips it again at once, over and over, would keep both sides busy
+ * every frame: past this many strips of one element within a second, re-tagging it
+ * waits, longer each time.
+ */
+const STRIP_WINDOW_MS = 1000;
+const STRIP_LIMIT = 15;
+const STRIP_BACKOFF_MIN_MS = 2000;
+const STRIP_BACKOFF_MAX_MS = 60000;
 
 const OBSERVE: MutationObserverInit = {
   childList: true,
   characterData: true,
   subtree: true,
   // Some libraries (DOM morphing) strip attributes they did not render; re-tag then.
+  // An element that becomes (or stops being) an editor is handled anew.
   attributes: true,
-  attributeFilter: [ATTR],
+  attributeFilter: [ATTR, 'contenteditable'],
 };
 
 export interface ScannerOptions extends TransformOptions {
@@ -100,7 +114,7 @@ function skipped(el: Element): boolean {
 
 function isEditableRoot(el: Element): boolean {
   const value = el.getAttribute('contenteditable');
-  return value !== null && value.toLowerCase() !== 'false';
+  return value !== null && EDITABLE_VALUES.has(value.trim().toLowerCase());
 }
 
 /** True for elements that are tagged for the font alone and own everything inside them. */
@@ -161,6 +175,11 @@ export class Scanner {
   private walker: TreeWalker | null = null;
   private pending: Element[] = [];
   private shadowRoots = new Set<ShadowRoot>();
+  /** How often the page has stripped each element's tag lately (see STRIP_LIMIT). */
+  private strips = new WeakMap<Element, { since: number; count: number; backoff: number; until: number }>();
+  /** Elements whose re-tagging waits out a back-off, and the timer that brings them back. */
+  private deferred = new Set<Element>();
+  private deferTimer: ReturnType<typeof setTimeout> | undefined;
   /** Lists Khatt flipped whose items have changed since. */
   private lists = new Set<Element>();
   /** Tagged elements whose direction fix has to be worked out again. */
@@ -289,15 +308,22 @@ export class Scanner {
     window.removeEventListener('load', this.onDocumentReady);
     document.removeEventListener('input', this.onInput, true);
     clearTimeout(this.revalidateTimer);
+    clearTimeout(this.deferTimer);
+    this.deferTimer = undefined;
+    this.deferred.clear();
+    this.strips = new WeakMap();
     this.roots = [];
     this.walker = null;
     this.pending = [];
     this.lists.clear();
     this.redirect.clear();
+    this.dirTargets = new WeakMap();
+    this.dirExtras = new WeakMap();
+    this.sheetStamp = new WeakMap();
     this.sheets = [];
     this.sheetCount = -1;
     this.transformer.restoreAll();
-    const selector = `[${ATTR}],[${PROSE_ATTR}],[${DIR_ATTR}],[${AUTO_DIR_ATTR}],[${JUSTIFY_ATTR}]`;
+    const selector = `[${ATTR}],[${PLAIN_ATTR}],[${PROSE_ATTR}],[${DIR_ATTR}],[${AUTO_DIR_ATTR}],[${JUSTIFY_ATTR}]`;
     for (const scope of this.scopes()) {
       for (const el of scope.querySelectorAll(selector)) {
         if (el.hasAttribute(AUTO_DIR_ATTR)) {
@@ -326,15 +352,30 @@ export class Scanner {
     this.schedule();
   }
 
+  /**
+   * The document and the shadow roots whose hosts are on the page. Roots whose host has
+   * left are let go, so pages that create and drop many components do not keep them
+   * all alive; a host that comes back is adopted again when it is walked.
+   */
   private scopes(): (Document | ShadowRoot)[] {
-    return [document, ...this.shadowRoots];
+    const scopes: (Document | ShadowRoot)[] = [document];
+    for (const root of this.shadowRoots) {
+      if (root.host.isConnected) {
+        scopes.push(root);
+      } else {
+        this.shadowRoots.delete(root);
+        root.removeEventListener('load', this.onStylesheetLoad, true);
+      }
+    }
+    return scopes;
   }
 
   private onMutations(records: MutationRecord[]): void {
     const added = new Set<Element>();
     for (const record of records) {
       if (record.type === 'attributes') {
-        this.recheck(record.target as Element);
+        if (record.attributeName === ATTR) this.recheck(record.target as Element);
+        else this.editableChanged(record.target as Element);
         continue;
       }
       if (record.type === 'characterData') {
@@ -346,7 +387,10 @@ export class Scanner {
         this.lists.add(parent as Element);
       }
       if (record.removedNodes.length > 0) {
-        if (parent.nodeType === Node.ELEMENT_NODE) this.checkEmptied(parent as Element);
+        if (parent.nodeType === Node.ELEMENT_NODE) {
+          this.checkEmptied(parent as Element);
+          this.checkEditorPlain(parent as Element);
+        }
         for (const node of record.removedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) this.noteRemoved(node as Element);
         }
@@ -378,10 +422,92 @@ export class Scanner {
     if (el.closest(SKIP_SELECTOR)) return;
     const owner = el.closest(OWNER_SELECTOR);
     if (owner) {
-      if (owner === el) this.pending.push(el);
+      if (owner === el) this.retag(el);
       return;
     }
-    if (isFontField(el) || hasOwnArabicText(el)) this.pending.push(el);
+    if (isFontField(el) || hasOwnArabicText(el)) this.retag(el);
+  }
+
+  /** Re-tags an element the page stripped, unless it keeps doing so at once (see STRIP_LIMIT). */
+  private retag(el: Element): void {
+    const now = performance.now();
+    let s = this.strips.get(el);
+    if (!s) this.strips.set(el, (s = { since: now, count: 0, backoff: 0, until: 0 }));
+    if (now < s.until) {
+      this.defer(el, s.until - now);
+      return;
+    }
+    if (now - s.since > STRIP_WINDOW_MS) {
+      s.since = now;
+      s.count = 0;
+    }
+    if (++s.count > STRIP_LIMIT) {
+      s.backoff = Math.min(Math.max(s.backoff * 2, STRIP_BACKOFF_MIN_MS), STRIP_BACKOFF_MAX_MS);
+      s.until = now + s.backoff;
+      s.since = s.until;
+      s.count = 0;
+      this.defer(el, s.backoff);
+      return;
+    }
+    this.pending.push(el);
+  }
+
+  private defer(el: Element, delay: number): void {
+    this.deferred.add(el);
+    if (this.deferTimer !== undefined) return;
+    this.deferTimer = setTimeout(() => {
+      this.deferTimer = undefined;
+      const els = [...this.deferred];
+      this.deferred.clear();
+      for (const d of els) this.recheck(d);
+      if (this.hasWork()) this.schedule();
+    }, delay);
+  }
+
+  /**
+   * An element's contenteditable changed. Becoming an editor, its content is the
+   * user's now: text Khatt rewrote must not be saved by the site, so it is put back,
+   * every mark inside comes off, and the editor is tagged for the font alone. Ceasing
+   * to be one, it is plain page content and is walked again.
+   */
+  private editableChanged(el: Element): void {
+    if (!el.isConnected || el.closest(SKIP_SELECTOR)) return;
+    if (isEditableRoot(el)) {
+      this.transformer.restoreSubtree(el);
+      const marked = `[${ATTR}],[${PLAIN_ATTR}],[${PROSE_ATTR}],[${DIR_ATTR}],[${AUTO_DIR_ATTR}],[${JUSTIFY_ATTR}]`;
+      for (const inner of el.querySelectorAll(marked)) this.clearMarks(inner);
+      this.clearMarks(el);
+      this.queue(el.parentElement?.closest(OWNER_SELECTOR) ?? el);
+    } else {
+      if (el.hasAttribute(ATTR)) this.untag(el);
+      el.removeAttribute(PLAIN_ATTR);
+      this.roots.push(el);
+    }
+  }
+
+  /** Every mark Khatt may have put on `el`, with its rewritten text and the direction fixes made for it. */
+  private clearMarks(el: Element): void {
+    if (el.hasAttribute(ATTR)) this.untag(el);
+    if (el.hasAttribute(AUTO_DIR_ATTR)) {
+      el.removeAttribute('dir');
+      el.removeAttribute(AUTO_DIR_ATTR);
+    }
+    el.removeAttribute(PLAIN_ATTR);
+    el.removeAttribute(PROSE_ATTR);
+    el.removeAttribute(DIR_ATTR);
+    el.removeAttribute(JUSTIFY_ATTR);
+  }
+
+  /** Text was removed inside an editor: once no Arabic is left, it keeps the site's spacing again. */
+  private checkEditorPlain(el: Element): void {
+    const editor = el.closest(EDITABLE_SELECTOR);
+    if (editor) this.refreshPlain(editor);
+  }
+
+  private refreshPlain(editor: Element): void {
+    if (editor.hasAttribute(ATTR) && !editor.hasAttribute(PLAIN_ATTR) && !holdsArabic(editor)) {
+      setAttr(editor, PLAIN_ATTR, '');
+    }
   }
 
   /**
@@ -410,11 +536,19 @@ export class Scanner {
     }
   }
 
+  /**
+   * A bare number Khatt itself wrote in Arabic-Indic digits (`عام <b>٢٠٢٤</b>`). The digits
+   * are Arabic script, but they are not Arabic text: the element around them must not be tagged.
+   */
+  private ownNumber(text: Text): boolean {
+    return isNumericOnly(text.data) && this.transformer.isOwnWrite(text);
+  }
+
   /** A text node that appeared or changed outside a subtree walk. */
   private checkLooseText(text: Text): void {
     const parent = text.parentElement;
     if (!parent) return;
-    const arabic = ARABIC_RE.test(text.data);
+    const arabic = ARABIC_RE.test(text.data) && !this.ownNumber(text);
 
     const owner = parent.closest(OWNER_SELECTOR);
     if (owner) {
@@ -423,6 +557,8 @@ export class Scanner {
       if (arabic) {
         this.queue(owner);
         setAttr(owner, PLAIN_ATTR, null);
+      } else if (isEditableRoot(owner)) {
+        this.refreshPlain(owner);
       }
       return;
     }
@@ -472,12 +608,19 @@ export class Scanner {
     const marked = [this.dirTargets.get(el), this.dirExtras.get(el), el];
     this.dirTargets.delete(el);
     this.dirExtras.delete(el);
+    // The others laid out by a block that loses its mark are planned again, and so must
+    // not count as fixed any more: the fix recorded for them was that very mark.
+    const detach = (other: Element, target: Element) => {
+      if (this.dirTargets.get(other) === target) this.dirTargets.delete(other);
+      if (this.dirExtras.get(other) === target) this.dirExtras.delete(other);
+      this.redirect.add(other);
+    };
     for (const target of marked) {
       if (!target?.hasAttribute(DIR_ATTR)) continue;
       target.removeAttribute(DIR_ATTR);
-      if (target !== el && target.hasAttribute(ATTR)) this.redirect.add(target);
+      if (target !== el && target.hasAttribute(ATTR)) detach(target, target);
       for (const other of target.querySelectorAll(`[${ATTR}]`)) {
-        if (other !== el) this.redirect.add(other);
+        if (other !== el) detach(other, target);
       }
     }
   }
@@ -575,7 +718,7 @@ export class Scanner {
       let node: Node | null;
       while ((node = this.walker.nextNode())) {
         if (node.nodeType === Node.TEXT_NODE) {
-          if (ARABIC_RE.test((node as Text).data)) {
+          if (ARABIC_RE.test((node as Text).data) && !this.ownNumber(node as Text)) {
             const parent = node.parentElement;
             if (parent) {
               if (parent.hasAttribute(ATTR)) {
@@ -642,7 +785,7 @@ export class Scanner {
   }
 
   /** Reads everything needed to tag `el`. Makes no changes. */
-  private planFor(el: Element, ignoreMarks: boolean): TagPlan | null {
+  private planFor(el: Element, ignoreMarks: boolean, lists?: Map<Element, boolean>): TagPlan | null {
     const cs = getComputedStyle(el);
     const stack = stripOwnFamily(cs.fontFamily);
     if (!stack) return null;
@@ -656,7 +799,7 @@ export class Scanner {
       prose: prose ? lineHeightBucket(cs.lineHeight, cs.fontSize) : null,
       justifiable:
         prose && cs.display !== 'inline' && cs.display !== 'contents' && JUSTIFIABLE.has(cs.textAlign),
-      direction: this.options.fixDirection && !bare ? planDirection(el, cs, ignoreMarks) : null,
+      direction: this.options.fixDirection && !bare ? planDirection(el, cs, ignoreMarks, lists) : null,
       // A field follows what is typed in it unless the site made it right-to-left —
       // not when it merely sits in a block that Khatt itself flipped.
       autoDir:
@@ -707,7 +850,8 @@ export class Scanner {
     );
     this.redirect.clear();
     if (!this.options.fixDirection) return;
-    const fixes = els.map((el) => planDirection(el, getComputedStyle(el)));
+    const lists = new Map<Element, boolean>();
+    const fixes = els.map((el) => planDirection(el, getComputedStyle(el), false, lists));
     els.forEach((el, i) => {
       const fix = fixes[i];
       if (fix) this.applyDirection(el, fix, false);
@@ -720,12 +864,14 @@ export class Scanner {
     const stamp = this.stylesheetStamp(false);
 
     const plans: TagPlan[] = [];
+    // Nothing is written until every plan is made, so a list's verdict holds for the batch.
+    const lists = new Map<Element, boolean>();
     const limit = Math.min(this.pending.length, TAG_BATCH_MAX);
     let taken = 0;
     while (taken < limit) {
       const el = this.pending[taken++]!;
       if (el.isConnected && !el.hasAttribute(ATTR)) {
-        const plan = this.planFor(el, false);
+        const plan = this.planFor(el, false, lists);
         if (plan) plans.push(plan);
       }
       if (taken >= TAG_BATCH_MIN && taken % 8 === 0 && performance.now() >= deadline) break;
@@ -772,7 +918,8 @@ export class Scanner {
     let plans: (TagPlan | null)[];
     this.styles.setDisabled(true);
     try {
-      plans = chunk.map((el) => this.planFor(el, true));
+      const lists = new Map<Element, boolean>();
+      plans = chunk.map((el) => this.planFor(el, true, lists));
     } finally {
       this.styles.setDisabled(false);
     }
